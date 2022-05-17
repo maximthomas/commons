@@ -99,7 +99,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- maven-compiler-plugin http://maven.apache.org/plugins/maven-compiler-plugin -->
-        <mavenCompilerPluginVersion>3.3</mavenCompilerPluginVersion>
+        <mavenCompilerPluginVersion>3.10.1</mavenCompilerPluginVersion>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
@@ -111,7 +111,7 @@
         <findbugsPluginVersion>3.0.1</findbugsPluginVersion>
 
         <!-- maven-javadoc-plugin -->
-        <javadocPluginVersion>3.0.1</javadocPluginVersion>
+        <javadocPluginVersion>3.4.0</javadocPluginVersion>
         <!-- build-tools stylesheet org/forgerock/javadoc/javadoc.css
              does not work with JDK7 -->
         <javadocStylesheet />
@@ -364,7 +364,6 @@
                 <artifactId>jackson-datatype-joda</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
-
 
             
 			<dependency>
@@ -781,6 +780,7 @@
 			   <artifactId>commons-io</artifactId>
 			   <version>2.7</version>
 			 </dependency>
+
 		    <dependency>
 			    <groupId>junit</groupId>
 			    <artifactId>junit</artifactId>
@@ -805,7 +805,7 @@
                 <plugin>
                     <groupId>org.codehaus.cargo</groupId>
                     <artifactId>cargo-maven3-plugin</artifactId>
-                    <version>1.9.8</version>
+                    <version>1.9.11</version>
                 </plugin>
                 <plugin>
                     <groupId>org.openidentityplatform.commons</groupId>
@@ -1027,6 +1027,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${mavenSurefirePluginVersion}</version>
+                    <configuration>
+                        <argLine>${java.surefire.options}</argLine>
+                    </configuration>
 <!--                     <dependencies> -->
 <!--                         <dependency> -->
 <!--                             <groupId>org.openidentityplatform</groupId> -->
@@ -1039,6 +1042,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>3.0.0-M3</version>
+                    <configuration>
+                        <argLine>${java.surefire.options}</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.plexus</groupId>
@@ -1339,6 +1345,24 @@
 	            </plugins>
 	        </build>
 	    </profile>
+        <profile>
+            <id>jdk17.options</id>
+            <activation>
+                <jdk>[17,)</jdk>
+            </activation>
+            <properties>
+                <java.surefire.options>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens=java.naming/javax.naming.spi=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED</java.surefire.options>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.openjdk.nashorn</groupId>
+                        <artifactId>nashorn-core</artifactId>
+                        <version>15.4</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
     </profiles>
     <reporting>
         <plugins>
