@@ -12,6 +12,7 @@
  * information: "Portions copyright [year] [name of copyright owner]".
  *
  * Copyright 2015 ForgeRock AS.
+ * Portions copyright 2024 3A Systems LLC.
  */
 package org.forgerock.doc.maven.pre;
 
@@ -87,6 +88,10 @@ public class ArbitraryResourceCopier {
 
                 if (m.getFormats().contains(AbstractDocbkxMojo.Format.xhtml5)) {
                     directories.add("xhtml");
+                }
+
+                if (m.getFormats().contains(AbstractDocbkxMojo.Format.markdown)) {
+                    directories.add("markdown");
                 }
 
                 try {

@@ -12,6 +12,7 @@
  * information: "Portions copyright [year] [name of copyright owner]".
  *
  * Copyright 2012-2015 ForgeRock AS.
+ * Portions copyright 2024 3A Systems LLC.
  */
 
 package org.forgerock.doc.maven;
@@ -22,6 +23,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.forgerock.doc.maven.build.ChunkedHtml;
 import org.forgerock.doc.maven.build.Epub;
+import org.forgerock.doc.maven.build.HtmlForMarkdown;
 import org.forgerock.doc.maven.build.Manpage;
 import org.forgerock.doc.maven.build.Pdf;
 import org.forgerock.doc.maven.build.Rtf;
@@ -32,6 +34,7 @@ import org.forgerock.doc.maven.build.HtmlForBootstrap;
 import org.forgerock.doc.maven.post.Html;
 import org.forgerock.doc.maven.post.Bootstrap;
 import org.forgerock.doc.maven.post.ManpagePost;
+import org.forgerock.doc.maven.post.Markdown;
 import org.forgerock.doc.maven.post.NoOp;
 import org.forgerock.doc.maven.post.WebhelpPost;
 import org.forgerock.doc.maven.post.Xhtml;
@@ -97,6 +100,9 @@ public class PreSiteMojo extends AbstractDocbkxMojo {
         if (formats.contains(Format.bootstrap)) {
             new HtmlForBootstrap(this).execute();
         }
+        if (formats.contains(Format.markdown)) {
+            new HtmlForMarkdown(this).execute();
+        }
 
         // Perform post-processing.
         if (formats.contains(Format.epub)) {
@@ -122,6 +128,9 @@ public class PreSiteMojo extends AbstractDocbkxMojo {
         }
         if (formats.contains(Format.bootstrap)) {
             new Bootstrap(this).execute();
+        }
+        if (formats.contains(Format.markdown)) {
+            new Markdown(this).execute();
         }
 
         // Optionally copy arbitrary resources.

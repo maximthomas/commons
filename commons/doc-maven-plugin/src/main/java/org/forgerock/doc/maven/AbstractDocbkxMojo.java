@@ -12,6 +12,7 @@
  * information: "Portions copyright [year] [name of copyright owner]".
  *
  * Copyright 2012-2015 ForgeRock AS.
+ * Portions copyright 2024 3A Systems LLC.
  */
 
 package org.forgerock.doc.maven;
@@ -1048,7 +1049,13 @@ abstract public class AbstractDocbkxMojo extends AbstractMojo {
          * Single-page XHTML5 without styling except syntax highlighting;
          * not ready for publication as is.
          */
-        xhtml5
+        xhtml5,
+
+
+        /**
+         * Chunked markdown files;
+         */
+        markdown,
     }
 
     /**
@@ -2001,5 +2008,32 @@ abstract public class AbstractDocbkxMojo extends AbstractMojo {
      */
     public final File getBootstrapCustomization() {
         return new File(getBuildDirectory(), bootstrapCustomization);
+    }
+
+    /**
+     * Location of the MarkdownForBootstrap XSL stylesheet customization file,
+     * relative to the build directory.
+     *
+     * <br>
+     *
+     * docbkx-tools element: &lt;bootstrapCustomization&gt;
+     */
+    private String markdownCustomization =
+            "docbkx-stylesheets/markdown/coredoc.xsl";
+    /**
+     * Get the location of the HtmlForMarkdown XSL stylesheet customization file.
+     *
+     * <br>
+     *
+     * Default: {@code ${project.build.directory}/docbkx-stylesheets/markdown/coredoc.xsl}
+     *
+     * <br>
+     *
+     * docbkx-tools element: &lt;bootstrapCustomization&gt;
+     *
+     * @return The location of the HtmlForMarkdown XSL stylesheet.
+     */
+    public final File getMarkdownCustomization() {
+        return new File(getBuildDirectory(), markdownCustomization);
     }
 }
