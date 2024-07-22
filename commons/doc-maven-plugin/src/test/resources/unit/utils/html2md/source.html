@@ -1,9 +1,6 @@
-<!DOCTYPE html>
 <html><head>
-
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Chapter&nbsp;2.&nbsp;Defining Authentication Services</title><link rel="stylesheet" type="text/css" href="coredoc.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"><link rel="home" href="index.html" title="OpenAM Administration Guide"><link rel="up" href="index.html" title="OpenAM Administration Guide"><link rel="prev" href="ch01.html" title="Chapter&nbsp;1.&nbsp;Administration Interfaces &amp; Tools"><link rel="next" href="ch03.html" title="Chapter&nbsp;3.&nbsp;Defining Authorization Policies"><link rel="copyright" href="ln-d0e48.html" title="Legal Notice"><link rel="shortcut icon" href="https://assets-cdn.github.com/favicon.ico">
-</head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="chapter"><div class="titlepage"><div><div><h1 class="title"><a name="chap-auth-services"></a>Chapter&nbsp;2.&nbsp;Defining Authentication Services</h1></div></div></div><p>An <em class="firstterm">authentication</em> service confirms the identity
+    <title>Chapter&nbsp;2.&nbsp;Defining Authentication Services</title><link rel="stylesheet" type="text/css" href="coredoc.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"><link rel="home" href="index.html" title="OpenAM Administration Guide"><link rel="up" href="index.html" title="OpenAM Administration Guide"><link rel="prev" href="ch01.html" title="Chapter&nbsp;1.&nbsp;Administration Interfaces &amp; Tools"><link rel="next" href="ch03.html" title="Chapter&nbsp;3.&nbsp;Defining Authorization Policies"><link rel="copyright" href="ln-d0e48.html" title="Legal Notice"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="chapter"><div class="titlepage"><div><div><h1 class="title"><a name="chap-auth-services"></a>Chapter&nbsp;2.&nbsp;Defining Authentication Services</h1></div></div></div><p>An <em class="firstterm">authentication</em> service confirms the identity
     of a user or a client application.</p><p>This chapter describes how to configure authentication in OpenAM.</p><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="what-is-authn"></a>2.1.&nbsp;About Authentication in OpenAM</h2></div></div></div><a class="indexterm" name="d0e507"></a><p>Access management is about controlling access to resources. OpenAM
     plays a role similar to border control at an international airport. Instead
     of having each and every airline company deal with access to each
@@ -1078,8 +1075,8 @@
     <code class="literal">info@forgerock.com</code>.</p><p><span class="command"><strong>ssoadm</strong></span> attribute:
     <code class="literal">org-forgerock-auth-oauth-smtp-email-from</code></p></dd><dt><span class="term">Authentication Level</span></dt><dd><p>Sets the authentication level used to indicate the level of security
     associated with the module. The value can range from 0 to any positive integer.</p><p><span class="command"><strong>ssoadm</strong></span> attribute:
-    <code class="literal">iplanet-am-auth-oauth-auth-level</code></p></dd></dl></div><p>The following tables show endpoint URLs for OpenAM when <a href="../../admin-guide/index/ch13.html" class="link">configured as an
-    OAuth 2.0 provider</a>, and also URLs for large OAuth 2.0 providers.
+    <code class="literal">iplanet-am-auth-oauth-auth-level</code></p></dd></dl></div><p>The following tables show endpoint URLs for OpenAM when <span class="olink">configured as an
+    OAuth 2.0 provider</span>, and also URLs for large OAuth 2.0 providers.
     The default endpoints are for Facebook as the OAuth 2.0 provider.</p><p>In addition to the endpoint URLs you can set other fields, like scope
     and attribute mapping, depending on the provider you use.</p><div class="table"><a name="oauth2-openam"></a><div class="table-title">Table&nbsp;2.1.&nbsp;Endpoint URLs for OpenAM</div><div class="table-contents"><table class="table" summary="Endpoint URLs for OpenAM" width="100%" border="0"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>OpenAM Field</th><th>Details</th></tr></thead><tbody><tr><td>Authentication Endpoint URL</td><td>
     <p><code class="literal">/oauth2/authorize</code> under the deployment
@@ -1099,7 +1096,7 @@
     URL is as follows:
     <code class="literal">https://openam.example.com:8443/openam/oauth2/authorize?realm=/customers</code></p><p>The <code class="literal">/oauth2/authorize</code> endpoint can also take
     <code class="literal">module</code> and <code class="literal">service</code> parameters.
-    Use either as described in <a href="../../admin-guide/index/ch02.html#authn-from-browser" class="link"><em class="citetitle">Authenticating To OpenAM</em></a>, where
+    Use either as described in <span class="olink"><em class="citetitle">Authenticating To OpenAM</em></span>, where
     <code class="literal">module</code> specifies the authentication module
     instance to use or <code class="literal">service</code> specifies the
     authentication chain to use when authenticating the resource
@@ -1290,8 +1287,8 @@
     server property,
     <code class="literal">org.forgerock.openam.authentication.accountExpire.days</code>.</p></dd></dl></div><p>If necessary, you can also write your own custom post authentication
     plugin as described in the <em class="citetitle">Developer's Guide</em> chapter
-    on <a href="../../dev-guide/index/ch18.html" class="link"><em class="citetitle">Creating a Post
-        Authentication Plugin</em></a>.</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="authn-from-browser"></a>2.5.&nbsp;Authenticating To OpenAM</h2></div></div></div><p>This section explains how to connect to OpenAM for user authentication
+    on <span class="olink"><em class="citetitle">Creating a Post
+  Authentication Plugin</em></span>.</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="authn-from-browser"></a>2.5.&nbsp;Authenticating To OpenAM</h2></div></div></div><p>This section explains how to connect to OpenAM for user authentication
     by adding parameters to the login URL when testing your configuration.</p><p>The base URL to authenticate to OpenAM points to
     <code class="literal">/UI/Login</code> under the deployment URL, such as
     <code class="literal">http://openam.example.com:8080/openam/UI/Login</code>.
@@ -1373,8 +1370,8 @@
     OpenAM tracks failed authentication attempts by writing to the user
     repository.</p><p>Persistent account lockout works independently of account lockout
     mechanisms in the underlying directory server that serves as the user
-    data store.</p></li></ul></div><div class="itemizedlist"><p>You configure account lockout by editing settings for the <a href="../../admin-guide/index/ch02.html#core-module-conf-hints" class="link">core authentication
-    module</a>. Access the settings in OpenAM console under Access Control
+    data store.</p></li></ul></div><div class="itemizedlist"><p>You configure account lockout by editing settings for the <span class="olink">core authentication
+   module</span>. Access the settings in OpenAM console under Access Control
     &gt; <em class="replaceable"><code>Realm Name</code></em> &gt; Authentication &gt; All
     Core Settings..., and then scroll down to the Account Lockout section.
     The inline help explains the settings in detail.</p><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Enable lockout by checking Login Failure Lockout Mode, setting
@@ -1393,7 +1390,7 @@
     set the user's User Status to Active, and click Save.</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="configure-session-quotas"></a>2.7.&nbsp;Configuring Session Quotas</h2></div></div></div><a class="indexterm" name="d0e6034"></a><p>OpenAM lets you limit the number of active sessions for a user by
     setting session quotas. You also configure session quota exhaustion actions
     so that when a user goes beyond the session quota, OpenAM takes the
-    appropriate action.</p><div class="important"><h3 class="title">Important</h3><p>To enforce session quotas across multiple servers in a site, configure
+    appropriate action.</p><div class="important"><h4 class="title">Important</h4><p>To enforce session quotas across multiple servers in a site, configure
     session failover as described in the <em class="citetitle">Installation Guide</em>
     chapter, <span class="olink"><em class="citetitle">Setting Up OpenAM
    Session Failover</em></span>.</p></div><div class="procedure"><a name="session-quotas-and-exhaustion-actions"></a><div class="procedure-title">Procedure&nbsp;2.3.&nbsp;To Configure Session Quotas &amp; Exhaustion Actions</div><p>The session quota applies to all sessions opened for the same
@@ -1405,8 +1402,8 @@
     user.</p></dd><dt><span class="term"><code class="literal">DESTROY_OLD_SESSIONS</code></span></dt><dd><p>Remove all existing sessions, and create a new session for the
     user.</p></dd></dl></div><p>If none of these session quota exhaustion actions fit your deployment,
     you can implement a custom session quota exhaustion action. See the
-    <em class="citetitle">Developer's Guide</em> chapter on <a href="../../dev-guide/index/ch17.html" class="link"><em class="citetitle">Customizing
-        Session Quota Exhaustion Actions</em></a> for an example.</p></li><li class="step"><p>Set Active User Sessions to the session quota.</p><p>The default is 5 sessions.</p></li><li class="step"><p>Save your work.</p></li><li class="step"><p>If you have multiple servers but session failover is not configured,
+    <em class="citetitle">Developer's Guide</em> chapter on <span class="olink"><em class="citetitle">Customizing
+   Session Quota Exhaustion Actions</em></span> for an example.</p></li><li class="step"><p>Set Active User Sessions to the session quota.</p><p>The default is 5 sessions.</p></li><li class="step"><p>Save your work.</p></li><li class="step"><p>If you have multiple servers but session failover is not configured,
     configure multi-server mode as described below.</p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>If you have only a single OpenAM server, skip this step. OpenAM
     enforces the session quota you set for the server.</p></li><li class="listitem"><p>If you have multiple servers with session failover configured, then
     also skip this step. In this case OpenAM uses the session store to enforce
@@ -1424,5 +1421,4 @@
     a maximum of 20 (5 * 4) sessions.</p></li></ul></div></li></ol></div></div><div class="footnotes"><br><hr class="footnote-hr"><div id="ftn.d0e542" class="footnote"><p><a href="#d0e542" class="para"><sup class="para">[3] </sup></a>The four flags, required, optional, requisite, and sufficient, come from
     the standards created for the Java Authentication and Authorization Service
     (JAAS).</p></div><div id="ftn.d0e5747" class="footnote"><p><a href="#d0e5747" class="para"><sup class="para">[4] </sup></a>The base URL to logout is similar, for example
-    <code class="literal">http://openam.example.com:8080/openam/UI/Logout</code>.</p></div></div></div>
-</html>
+    <code class="literal">http://openam.example.com:8080/openam/UI/Logout</code>.</p></div></div></div></body></html>

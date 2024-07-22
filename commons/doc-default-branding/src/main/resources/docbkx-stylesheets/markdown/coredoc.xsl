@@ -81,6 +81,29 @@
   <em><xsl:apply-templates mode="screen"/></em>
  </xsl:template>
 
+ <xsl:template name="nongraphical.admonition">
+  <div>
+   <xsl:call-template name="common.html.attributes">
+    <xsl:with-param name="inherit" select="1"/>
+   </xsl:call-template>
+   <xsl:call-template name="id.attribute"/>
+   <xsl:if test="$admon.style != '' and $make.clean.html = 0">
+    <xsl:attribute name="style">
+     <xsl:value-of select="$admon.style"/>
+    </xsl:attribute>
+   </xsl:if>
+
+   <xsl:if test="$admon.textlabel != 0 or title or info/title">
+    <h4 class="title">
+     <xsl:call-template name="anchor"/>
+     <xsl:apply-templates select="." mode="object.title.markup"/>
+    </h4>
+   </xsl:if>
+
+   <xsl:apply-templates/>
+  </div>
+ </xsl:template>
+
  <xsl:param name="make.clean.html" select="1" />
  <xsl:param name="docbook.css.link" select="0" />
  <xsl:param name="docbook.css.source" select="0" />

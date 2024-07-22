@@ -26,6 +26,8 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HtmlToMarkdownConverter {
     String imagePrefix;
@@ -38,6 +40,7 @@ public class HtmlToMarkdownConverter {
 
         convertFootNotes(doc);
         removeAnchors(doc);
+        moveHeaderAnchors(doc);
         fixImagesPath(doc);
 
         String content = doc.toString();
@@ -46,7 +49,9 @@ public class HtmlToMarkdownConverter {
                 .set(FlexmarkHtmlConverter.PRE_CODE_PRESERVE_EMPHASIS, true)
                 .set(FlexmarkHtmlConverter.SKIP_CHAR_ESCAPE, true)
                 .set(FlexmarkHtmlConverter.EXTRACT_AUTO_LINKS, false);
-        return FlexmarkHtmlConverter.builder(options).build().convert(content);
+        String markdown = FlexmarkHtmlConverter.builder(options).build().convert(content);
+        markdown = fixMarkdownHrefs(markdown);
+        return markdown;
     }
 
 
@@ -69,8 +74,17 @@ public class HtmlToMarkdownConverter {
         });
     }
 
+    private void moveHeaderAnchors(Document doc) {
+        Elements elements = doc.select("h2 a, h3 a, h4 a, h5 a");
+        elements.forEach(el -> {
+            Element p = el.parent();
+            el.remove();
+            p.appendChild(el);
+        });
+    }
+
     private void removeAnchors(Document doc) {
-        Elements elements = doc.select("a[name]");
+        Elements elements = doc.select("h1 a, a.indexterm[name], .procedure a[name]");
         elements.remove();
     }
 
@@ -82,4 +96,23 @@ public class HtmlToMarkdownConverter {
             img.attr("src", src);
         });
     }
+
+    final static Pattern hrefPattern = Pattern.compile("\\{#([a-zA-Z0-9\\-]*)\\}");
+    private String fixMarkdownHrefs(String markdown) {
+        Matcher hrefMatcher = hrefPattern.matcher(markdown);
+        while (hrefMatcher.find()) {
+            String href = hrefMatcher.group(0);
+            String hrefVal = hrefMatcher.group(1);
+            //String a = String.format("<a name=\"%s\"></a>", hrefVal);
+            String a = String.format("\\{#%s\\}", hrefVal);
+            markdown = markdown.replace(href, a);
+        }
+
+        //fix html links
+        markdown = markdown.replaceAll("\\.html#", "#");
+
+        return markdown;
+    }
+
+
 }
