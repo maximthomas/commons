@@ -194,6 +194,7 @@
         <swagger.version>1.6.11</swagger.version>
         <rhino.version>1.7.14</rhino.version>
         <jetty.version>9.4.57.v20241219</jetty.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
     </properties>
 
     <prerequisites>
@@ -864,6 +865,11 @@
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-server</artifactId>
                 <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
             </dependency>
 		</dependencies>
 	</dependencyManagement>
