@@ -268,6 +268,7 @@ public final class VerifyEmailAccountStage implements ProgressStage<VerifyEmailA
         String subjectText = getTranslationFromLocaleMap(preferredLocales, config.getSubjectTranslations());
         String bodyText = getTranslationFromLocaleMap(preferredLocales, config.getMessageTranslations());
         bodyText = bodyText.replace(config.getVerificationLinkToken(), modifiedEmailUrl);
+        bodyText = bodyText.replace(config.getVerificationCodeToken(), code);
 
         try (Connection connection = connectionFactory.getConnection()) {
             ActionRequest request = Requests

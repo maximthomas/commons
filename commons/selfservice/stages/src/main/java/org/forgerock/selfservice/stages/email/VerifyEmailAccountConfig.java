@@ -12,6 +12,7 @@
  * information: "Portions copyright [year] [name of copyright owner]".
  *
  * Copyright 2015 ForgeRock AS.
+ * Portions copyright 2025 3A Systems LLC.
  */
 
 package org.forgerock.selfservice.stages.email;
@@ -41,6 +42,7 @@ public final class VerifyEmailAccountConfig implements StageConfig {
     private String mimeType;
     private String verificationLink;
     private String verificationLinkToken;
+    private String verificationCodeToken = "%code%"; //set the default value
     private String identityEmailField;
 
     /**
@@ -198,6 +200,28 @@ public final class VerifyEmailAccountConfig implements StageConfig {
     }
 
     /**
+     * Gets the string token representing where the verification code should be substituted.
+     *
+     * @return the verification URL string token
+     */
+    public String getVerificationCodeToken() {
+        return verificationCodeToken;
+    }
+
+    /**
+     * Sets the string token representing where the verification code should be substituted.
+     *
+     * @param verificationCodeToken
+     *         the verification URL string token
+     *
+     * @return this config instance
+     */
+    public VerifyEmailAccountConfig setVerificationCodeToken(String verificationCodeToken) {
+        this.verificationCodeToken = verificationCodeToken;
+        return this;
+    }
+
+    /**
      * Gets the field name for the identity email address.
      *
      * @return the identity email address field name
@@ -249,6 +273,7 @@ public final class VerifyEmailAccountConfig implements StageConfig {
                 && Objects.equals(mimeType, that.mimeType)
                 && Objects.equals(verificationLink, that.verificationLink)
                 && Objects.equals(verificationLinkToken, that.verificationLinkToken)
+                && Objects.equals(verificationCodeToken, that.verificationCodeToken)
                 && Objects.equals(identityEmailField, that.identityEmailField);
     }
 
@@ -256,7 +281,7 @@ public final class VerifyEmailAccountConfig implements StageConfig {
     public int hashCode() {
         return Objects.hash(getName(), getProgressStageClassName(),
                 emailServiceUrl, subjectTranslations, from, messageTranslations, mimeType,
-                verificationLink, verificationLinkToken, identityEmailField);
+                verificationLink, verificationLinkToken, verificationCodeToken, identityEmailField);
     }
 
 }
