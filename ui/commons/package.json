@@ -5,14 +5,14 @@
   "scripts": {
     "clean:jsdoc": "rimraf jsdoc",
     "prejsdoc": "npm run clean:jsdoc -s",
-    "jsdoc": "jsdoc --configure jsdoc.json"
+    "jsdoc": "jsdoc --configure jsdoc.json",
+    "lint": "eslint \"src/main/js/**/*.js\" --format eslint-formatter-warning-summary",
+    "build": "npm run lint",
+    "default": "build"
   },
   "devDependencies": {
-    "eslint": "4.18.2",
+    "eslint": "^9.0.0",
     "eslint-formatter-warning-summary": "^1.0.1",
-    "grunt": "1.5.3",
-    "grunt-cli": "1.4.3",
-    "grunt-eslint": "19.0.0",
     "jsdoc": "3.5.5",
     "rimraf": "2.5.3",
     "es5-ext": "0.10.53"

@@ -542,7 +542,17 @@
                 <arguments>install</arguments>
               </configuration>
             </execution>
-            <execution>
+            <!-- <execution>
+              <id>npm build</id>
+              <goals>
+                <goal>npm</goal>
+              </goals>
+              <phase>compile</phase>
+              <configuration>
+                <arguments>run build</arguments>
+              </configuration>
+            </execution> -->
+             <execution>
               <id>grunt</id>
               <goals>
                 <goal>grunt</goal>
