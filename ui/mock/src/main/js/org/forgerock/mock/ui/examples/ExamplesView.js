@@ -17,9 +17,9 @@
 define([
     "jquery",
     "underscore",
-    "libs/codemirror-4.10/lib/codemirror",
-    "libs/codemirror-4.10/mode/xml/xml",
-    "libs/codemirror-4.10/mode/javascript/javascript",
+    "libs/codemirror5-4.10.0/lib/codemirror",
+    "libs/codemirror5-4.10.0/mode/xml/xml",
+    "libs/codemirror5-4.10.0/mode/javascript/javascript",
     "bootstrap",
     "selectize",
     "org/forgerock/commons/ui/common/main/AbstractView"
