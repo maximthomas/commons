@@ -7,5 +7,12 @@ target
 dependency-reduced-pom.xml
 node_modules
 package-lock.json
+# As of task 3.2 the commons module has a build toolchain worth pinning — the ES module
+# generator and the Babel presets that decide what the emitted package contains — so its
+# resolved versions are committed and the emit is reproducible from a clean clone. Note what
+# this lockfile does NOT pin: the package declares no `dependencies`, only peerDependencies and
+# devDependencies, so nothing here is resolved on a consumer's behalf. The other ui modules keep
+# the blanket ignore until they emit a package of their own (user is task 3.3).
+!commons/package-lock.json
 node/
 .DS_Store
