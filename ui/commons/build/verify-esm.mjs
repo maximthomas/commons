@@ -53,7 +53,7 @@ if (!fs.existsSync(ESM_ROOT)) {
     process.exit(1);
 }
 
-const PRODUCT_STUB = new URL("./product-supplied-stub.mjs", import.meta.url).href;
+const PRODUCT_STUB = new URL("../../build/empty-module-stub.mjs", import.meta.url).href;
 
 /*
  * The three ids the consuming product owns. Listed explicitly rather than pattern-matched, so
@@ -63,7 +63,7 @@ const PRODUCT_STUB = new URL("./product-supplied-stub.mjs", import.meta.url).hre
 const PRODUCT_SUPPLIED = ["ThemeManager", "NavigationFilter", "config/AppConfiguration"];
 
 const STUBS = Object.assign(
-    { jquery: new URL("./jquery-node-stub.mjs", import.meta.url).href },
+    { jquery: new URL("../../build/jquery-node-stub.mjs", import.meta.url).href },
     Object.fromEntries(PRODUCT_SUPPLIED.map((id) => [id, PRODUCT_STUB]))
 );
 
@@ -72,8 +72,12 @@ const ALIASES = {
     underscore: "lodash"
 };
 
-module.register("./esm-resolve-hooks.mjs", import.meta.url, {
-    data: { esmRoot: ESM_ROOT, stubs: STUBS, aliases: ALIASES }
+module.register("../../build/esm-resolve-hooks.mjs", import.meta.url, {
+    data: {
+        prefixes: [{ prefix: ID_PREFIX + "/", root: ESM_ROOT }],
+        stubs: STUBS,
+        aliases: ALIASES
+    }
 });
 
 const checks = [];

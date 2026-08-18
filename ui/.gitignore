@@ -12,7 +12,13 @@ package-lock.json
 # resolved versions are committed and the emit is reproducible from a clean clone. Note what
 # this lockfile does NOT pin: the package declares no `dependencies`, only peerDependencies and
 # devDependencies, so nothing here is resolved on a consumer's behalf. The other ui modules keep
-# the blanket ignore until they emit a package of their own (user is task 3.3).
+# the blanket ignore until they emit a package of their own.
 !commons/package-lock.json
+# Task 3.3: user now emits a package too, and runs through the same emitter in ui/build, so its
+# resolved toolchain versions are pinned for the same reason. Same caveat as above — this package
+# declares no `dependencies`, only peerDependencies and devDependencies, so the lockfile resolves
+# nothing on a consumer's behalf. Note it does NOT pin @openidentityplatform/ui-commons: that peer
+# is on no registry until task 3.11 and is marked optional so npm can build a tree at all.
+!user/package-lock.json
 node/
 .DS_Store

@@ -31,7 +31,12 @@ module.exports = function (grunt) {
                     // build/*.js only — the *.mjs harness uses top-level await, which eslint
                     // 4.18.2 cannot parse. See build/.eslintrc.
                     "src/main/esm/**/*.js",
-                    "build/*.js"
+                    "build/*.js",
+                    // The shared emitter, which lives outside both Maven modules and so inherits
+                    // neither module's config — it carries its own root .eslintrc.js. Both
+                    // modules lint it, and because eslint resolves config from the linted file's
+                    // directory both runs agree, so whichever is built first catches drift.
+                    "../build/*.js"
                     //"src/test/js/**/*.js"
                 ],
                 options: {
@@ -101,7 +106,16 @@ module.exports = function (grunt) {
     });
 
     // `build` is what frontend-maven-plugin runs at `compile`, and it is kept to the steps that
-    // produce the artifacts — so the www zip cannot be held hostage by an ESM-only failure.
+    // produce the artifacts — so the www zip cannot be held hostage by an ESM *import* failure,
+    // which is the class of breakage the ESM checks exist to catch and the one most likely to need
+    // a DOM, a network or a toolchain the Maven build does not have.
+    //
+    // It is not full insulation and should not be read as such: `npm-package` runs here too, and
+    // its licence, count and payload-record assertions fail the build at `compile`, before
+    // `package`. Adding a template without rerunning `npm run update:payload-record` does stop the
+    // zip. That is deliberate — a payload record that can drift silently is worth nothing to task
+    // 3.6 — but it is the reason this split is narrower than it looks.
+    //
     // `verify` is the full check and the default, so a bare `grunt` locally still runs everything.
     grunt.registerTask("build", ["eslint", "npm-package"]);
     grunt.registerTask("verify", ["build", "verify-esm"]);

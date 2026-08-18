@@ -1,0 +1,72 @@
+# @openidentityplatform/ui-user — expected tarball payload.
+# COMMITTED RECORD. Task 3.6 diffs `npm pack` output against this; the shared emitter
+# in ui/build/npm-package-lib.js asserts the emitted tree against it on every run.
+# Regenerate only on a deliberate payload change, with
+#     node build/npm-package.js --update-payload-record
+# and commit the diff together with the source change that caused it.
+
+LICENSE.md
+MANIFEST.txt
+NPM-PACKAGE.md
+amd/config/messages/UserMessages.js
+amd/config/routes/UserRoutesConfig.js
+amd/org/forgerock/commons/ui/user/anonymousProcess/AnonymousProcessView.js
+amd/org/forgerock/commons/ui/user/anonymousProcess/ForgotUsernameView.js
+amd/org/forgerock/commons/ui/user/anonymousProcess/KBAQuestionView.js
+amd/org/forgerock/commons/ui/user/anonymousProcess/KBAView.js
+amd/org/forgerock/commons/ui/user/anonymousProcess/PasswordResetView.js
+amd/org/forgerock/commons/ui/user/anonymousProcess/SelfRegistrationView.js
+amd/org/forgerock/commons/ui/user/delegates/AnonymousProcessDelegate.js
+amd/org/forgerock/commons/ui/user/delegates/KBADelegate.js
+amd/org/forgerock/commons/ui/user/profile/AbstractUserProfileTab.js
+amd/org/forgerock/commons/ui/user/profile/ConfirmPasswordDialog.js
+amd/org/forgerock/commons/ui/user/profile/UserProfileKBATab.js
+amd/org/forgerock/commons/ui/user/profile/UserProfileView.js
+amd/package.json
+esm/config/messages/UserMessages.js
+esm/config/routes/UserRoutesConfig.js
+esm/org/forgerock/commons/ui/user/anonymousProcess/AnonymousProcessView.js
+esm/org/forgerock/commons/ui/user/anonymousProcess/ForgotUsernameView.js
+esm/org/forgerock/commons/ui/user/anonymousProcess/KBAQuestionView.js
+esm/org/forgerock/commons/ui/user/anonymousProcess/KBAView.js
+esm/org/forgerock/commons/ui/user/anonymousProcess/PasswordResetView.js
+esm/org/forgerock/commons/ui/user/anonymousProcess/SelfRegistrationView.js
+esm/org/forgerock/commons/ui/user/delegates/AnonymousProcessDelegate.js
+esm/org/forgerock/commons/ui/user/delegates/KBADelegate.js
+esm/org/forgerock/commons/ui/user/profile/AbstractUserProfileTab.js
+esm/org/forgerock/commons/ui/user/profile/ConfirmPasswordDialog.js
+esm/org/forgerock/commons/ui/user/profile/UserProfileKBATab.js
+esm/org/forgerock/commons/ui/user/profile/UserProfileView.js
+esm/package.json
+package.json
+www/locales/en/translation.json
+www/partials/form/_basicInput.html
+www/partials/form/_basicSaveReset.html
+www/partials/process/_kbaItem.html
+www/partials/profile/_kbaItem.html
+www/templates/user/AnonymousProcessBaseTemplate.html
+www/templates/user/AnonymousProcessWrapper.html
+www/templates/user/ConfirmPasswordDialogTemplate.html
+www/templates/user/UserProfileKBATab.html
+www/templates/user/UserProfileTemplate.html
+www/templates/user/process/GenericEndPage.html
+www/templates/user/process/GenericInputForm.html
+www/templates/user/process/KBAQuestionTemplate.html
+www/templates/user/process/KBATemplate.html
+www/templates/user/process/registration/captcha-initial.html
+www/templates/user/process/registration/emailValidation-initial.html
+www/templates/user/process/registration/emailValidation-validateCode.html
+www/templates/user/process/registration/kbaSecurityAnswerDefinitionStage-initial.html
+www/templates/user/process/registration/termsAndConditions-initial.html
+www/templates/user/process/registration/userDetails-initial.html
+www/templates/user/process/reset/captcha-initial.html
+www/templates/user/process/reset/emailValidation-initial.html
+www/templates/user/process/reset/emailValidation-validateCode.html
+www/templates/user/process/reset/kbaSecurityAnswerVerificationStage-initial.html
+www/templates/user/process/reset/resetStage-initial.html
+www/templates/user/process/reset/userQuery-initial.html
+www/templates/user/process/username/captcha-initial.html
+www/templates/user/process/username/emailUsername-end.html
+www/templates/user/process/username/kbaSecurityAnswerVerificationStage-initial.html
+www/templates/user/process/username/retrieveUsername-end.html
+www/templates/user/process/username/userQuery-initial.html
