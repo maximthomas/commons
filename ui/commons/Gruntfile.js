@@ -117,7 +117,34 @@ module.exports = function (grunt) {
     // 3.6 — but it is the reason this split is narrower than it looks.
     //
     // `verify` is the full check and the default, so a bare `grunt` locally still runs everything.
+    /**
+     * Run the ported commons suite against the emitted ES module tree.
+     *
+     * Task 3.5. The same assertions the QUnit files in src/test/qunit make about the AMD build,
+     * restated in Vitest over target/npm/esm, because no one runner can load both builds — see
+     * the header of vitest.config.mjs for why the suite is stated twice and what is not ported.
+     *
+     * Bound into `verify` and NOT into `build`, for exactly the reason verify-esm is: `build`
+     * runs at Maven's `compile` phase and the www zip is assembled at `package`, so anything in
+     * `build` can stop the zip, and design.md makes that zip phase 1's rollback channel. A
+     * failing ES module test must not stop a consumer of the AMD build from building.
+     *
+     * It needs the peer dependencies installed, which `npm install` provides, and a DOM, which
+     * vitest.config.mjs asks jsdom for.
+     */
+    grunt.registerTask("test-esm", "Run the commons suite against the emitted ES module build", function () {
+        var done = this.async();
+
+        grunt.util.spawn({
+            cmd: process.execPath,
+            args: [require.resolve("vitest/vitest.mjs"), "run"],
+            opts: { cwd: __dirname, stdio: "inherit" }
+        }, function (error, result, code) {
+            done(code === 0);
+        });
+    });
+
     grunt.registerTask("build", ["eslint", "npm-package"]);
-    grunt.registerTask("verify", ["build", "verify-esm"]);
+    grunt.registerTask("verify", ["build", "verify-esm", "test-esm"]);
     grunt.registerTask("default", "verify");
 };

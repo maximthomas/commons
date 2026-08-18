@@ -16,6 +16,7 @@
   "scripts": {
     "build:npm": "node build/npm-package.js",
     "verify:esm": "node build/verify-esm.mjs",
+    "test:esm": "vitest run",
     "update:payload-record": "node build/npm-package.js --update-payload-record",
     "clean:jsdoc": "rimraf jsdoc",
     "prejsdoc": "npm run clean:jsdoc -s",
@@ -46,6 +47,7 @@
     "xdate": "^0.8.0"
   },
   "//devDependencies": "The peer set is repeated here at the exact versions the source is written against, so that commons can resolve its own bare specifiers without a consumer present — the ES module build cannot be imported to verify it otherwise, and task 3.5's CI job runs the commons tests against both builds. Build-only entries: @buxlabs/amd-to-es6 generates the ES module tree from the AMD source, and @babel/* transpile the AMD tree (see build/npm-package.js).",
+  "//devDependencies-esm-tests": "vitest, jsdom and sinon are task 3.5's. They run the ported commons suite in src/test/vitest against the EMITTED ES module tree under target/npm/esm — not against src/main/js — so a passing run is evidence about the build the package ships. The AMD build is exercised by the untouched QUnit files in src/test/qunit through commons/ui/mock, which is why both suites exist and why neither may be deleted in favour of the other; .github/workflows/ui-commons-dual-build.yml runs them in one job for that reason. `sinon` is pinned to 15.2.0 to match <sinon.version> in commons/ui/pom.xml, the version the QUnit run gets from the commons.ui.libs Maven artifact: the same test doubles on both sides, so a divergence between the two runs is about the builds and not about sinon. `jsdom` is 26.1.0 rather than the current 30.x because 30 requires Node >= 22.22.2 while frontend-maven-plugin pins Node 20.12.2 in commons/ui/pom.xml; 26.1.0 declares >= 18 and installs cleanly under both. `vitest` is 3.2.7 rather than 4.x for a related reason plus one of its own: 4.x makes `vite` a required peer that would have to be declared and pinned here as well, while 3.x carries it as a dependency.",
   "devDependencies": {
     "@babel/core": "7.24.5",
     "@babel/plugin-transform-classes": "7.24.5",
@@ -70,13 +72,16 @@
     "jquery": "3.7.1",
     "jquery-placeholder": "2.1.1",
     "jsdoc": "3.5.5",
+    "jsdom": "26.1.0",
     "lodash": "3.10.1",
     "moment": "2.28.0",
     "react": "15.2.1",
     "react-dom": "15.2.1",
     "requirejs": "2.3.7",
     "rimraf": "2.5.3",
+    "sinon": "15.2.0",
     "spin.js": "2.0.1",
+    "vitest": "3.2.7",
     "xdate": "0.8.0"
   }
 }

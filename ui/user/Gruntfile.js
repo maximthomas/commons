@@ -118,7 +118,32 @@ module.exports = function (grunt) {
     // 3.6 — but it is the reason this split is narrower than it looks.
     //
     // `verify` is the full check and the default, so a bare `grunt` locally still runs everything.
+    /**
+     * Import every module of the emitted ES module tree under a DOM.
+     *
+     * Task 3.5, closing what verify-esm names and declines to do. Ten of this package's fourteen
+     * modules cannot be imported under bare Node — commons' util/UIUtils assigns `$.fn.emptySelect`
+     * at module scope and jQuery 3 without a `window` yields a factory with no `.fn` — and
+     * build/verify-esm.mjs says the fix is jsdom and belongs here rather than to a stub grown until
+     * the import succeeds. src/test/vitest is that run; vitest.config.mjs has the rest.
+     *
+     * In `verify` and not `build`, for the same reason verify-esm is: `build` runs at Maven's
+     * `compile` and the www zip is assembled at `package`, so anything in `build` can stop the zip
+     * — and design.md makes that zip phase 1's rollback channel.
+     */
+    grunt.registerTask("test-esm", "Import the emitted ES module build under a DOM", function () {
+        var done = this.async();
+
+        grunt.util.spawn({
+            cmd: process.execPath,
+            args: [require.resolve("vitest/vitest.mjs"), "run"],
+            opts: { cwd: __dirname, stdio: "inherit" }
+        }, function (error, result, code) {
+            done(code === 0);
+        });
+    });
+
     grunt.registerTask("build", ["eslint", "npm-package"]);
-    grunt.registerTask("verify", ["build", "verify-esm"]);
+    grunt.registerTask("verify", ["build", "verify-esm", "test-esm"]);
     grunt.registerTask("default", "verify");
 };

@@ -16,6 +16,7 @@
   "scripts": {
     "build:npm": "node build/npm-package.js",
     "verify:esm": "node build/verify-esm.mjs",
+    "test:esm": "vitest run",
     "update:payload-record": "node build/npm-package.js --update-payload-record"
   },
   "//peerDependencies": "Everything this package's modules import and does not itself contain. They are peers rather than dependencies because the consuming product composes commons by flat file overlay into one global namespace: a nested second copy means two module registries, not a subtle version skew. Versions are what the source is written against, from commons/ui/LIBS-INVENTORY.md (task 3.1).",
@@ -38,6 +39,7 @@
   },
   "//consumer-supplied-ids": "Four identifiers these modules import that are NOT peers and cannot become peers. `underscore` is rebound by the product to lodash (openam-ui-ria's require.config.map), exactly as in ui-commons. `KBADelegate` is a logical name the product binds to its own implementation — openam-ui-ria points it at org/forgerock/openam/ui/user/services/KBADelegate, not at this package's own delegates/KBADelegate. And `form2js` and `js2form` have no npm package at all: LIBS-INVENTORY.md section 6 records both as maxatwork/form2js at a pinned git commit, never published — npm's `form2js` is a different fork's, and `js2form` is a sibling file in that same commit rather than a package. Declaring a peer range for any of the four would assert a resolution that does not exist. NPM-PACKAGE.md lists what a consumer binds each to, and `npm run verify:esm` fails if a fifth appears.",
   "//devDependencies": "The peer set repeated at the exact versions the source is written against, so this package can resolve its own specifiers without a consumer present — the ES module build cannot be imported to verify it otherwise. @openidentityplatform/ui-commons is absent on purpose: it is not on any registry yet (task 3.11), and build/verify-esm.mjs resolves it from the sibling module's emitted tree the way a consumer's alias will. Build-only entries: @buxlabs/amd-to-es6 generates the ES module tree from the AMD source, and @babel/* transpile the AMD tree — the same versions ui/commons pins, because ui/build/npm-package-lib.js runs both modules through one emitter and a version split there would mean two packages transpiled differently.",
+  "//devDependencies-esm-tests": "vitest and jsdom are task 3.5's, and they close a gap build/verify-esm.mjs names in its own header: ten of this package's fourteen modules cannot be imported under bare Node, because commons' util/UIUtils assigns $.fn.emptySelect at module scope and jQuery 3 without a window carrying a document yields a factory with no .fn. That file says in as many words that the fix is jsdom and belongs to task 3.5, and declines to grow a stub until the import succeeds. src/test/vitest is that jsdom run: it imports all fourteen emitted ES modules, so the four verify-esm proves and the ten it cannot are both covered, and it does so against target/npm/esm rather than the sources. No `sinon` here, unlike ui/commons: this package has no behavioural suite to port — its one QUnit file is commented out of ui/mock's test list and runs on neither side — so nothing here stubs anything. Versions match ui/commons for the reasons recorded there: jsdom 30 needs Node >= 22.22.2 against frontend-maven-plugin's pinned 20.12.2, and vitest 4 would make `vite` a peer to declare and pin as well.",
   "devDependencies": {
     "@babel/core": "7.24.5",
     "@babel/plugin-transform-classes": "7.24.5",
@@ -52,7 +54,9 @@
     "grunt-eslint": "19.0.0",
     "handlebars": "4.7.7",
     "jquery": "3.7.1",
+    "jsdom": "26.1.0",
     "lodash": "3.10.1",
-    "requirejs": "2.3.7"
+    "requirejs": "2.3.7",
+    "vitest": "3.2.7"
   }
 }

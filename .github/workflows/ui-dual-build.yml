@@ -1,0 +1,460 @@
+# The contents of this file are subject to the terms of the Common Development and
+# Distribution License (the License). You may not use this file except in compliance with the
+# License.
+#
+# You can obtain a copy of the License at legal/CDDLv1.0.txt. See the License for the
+# specific language governing permission and limitations under the License.
+#
+# When distributing Covered Software, include this CDDL Header Notice in each file and include
+# the License file at legal/CDDLv1.0.txt. If applicable, add the following below the CDDL
+# Header, with the fields enclosed by brackets [] replaced by your own identifying
+# information: "Portions copyright [year] [name of copyright owner]".
+#
+# Copyright 2026 3A Systems, LLC.
+#
+# ONE RUN, BOTH OUTPUTS, BOTH EXERCISED.
+#
+# ui/commons and ui/user each emit an ES module build and an AMD build from one AMD source
+# (design decision D5). Two builds generated from one source drift the moment only one of them is
+# ever run, and the requirement this job implements says so in as many words:
+#
+#   "Both builds SHALL be produced and exercised by the same continuous integration run, so they
+#    cannot diverge unobserved."
+#
+# THE SAME RUN IS THE POINT, AND IT IS WHY THIS IS ONE JOB.
+#
+# Two jobs that can go green independently do not stop the outputs diverging -- they only report
+# it in two places. A single job on a single runner produces both trees from one `mvn install`
+# and then runs both suites over those exact trees, so "the AMD build passed" and "the ES module
+# build passed" are statements about the same emit, and the comparison at the end is possible at
+# all.
+#
+# WHAT EXERCISES WHAT
+#
+#   target/npm/amd  ->  src/test/qunit, 10 files, through commons/ui/mock's Grunt build:
+#                       RequireJS in headless Chrome, over a composition directory this job
+#                       overlays the package's AMD tree onto. This is task 3.4's procedure
+#                       (ui/AMD-PARITY.md, "Step 2"), turned into a step.
+#
+#   target/npm/esm  ->  ui/commons/src/test/vitest, 9 files, under Vitest and jsdom, resolving
+#                       every commons id to target/npm/esm. Task 3.5 ported those from the QUnit
+#                       files; see ui/commons/vitest.config.mjs for why the suite is stated twice
+#                       in two frameworks rather than shared, and what is deliberately not ported.
+#
+#                       ui/user/src/test/vitest imports all fourteen of ui-user's emitted modules
+#                       under jsdom. That is an import check and not a behavioural suite, and it
+#                       is here because ui/user/build/verify-esm.mjs asks for it by name: ten of
+#                       those fourteen cannot be imported under bare Node, and it prints "task 3.5
+#                       owns that" on every run rather than growing a stub until they can.
+#
+#                       Plus `npm run verify:esm` on both packages, which imports what it can and
+#                       exercises the LoaderRuntime seam.
+#
+# WHAT THIS JOB DOES NOT COVER, STATED SO A GREEN TICK IS NOT READ AS MORE THAN IT IS
+#
+#   - The AMD suite is 33 tests and the ES module suite is 32. The missing one is
+#     src/test/qunit/form2js.js, which imports `form2js` and `js2form` and no commons module at
+#     all: it exercises maxatwork/form2js, which has no npm package in existence
+#     (ui/LIBS-INVENTORY.md section 6) and nothing in the ES module build.
+#   - ui/user gets an import check and no behaviour, because it has no behavioural tests anywhere:
+#     its one QUnit file, user/src/test/qunit/AnonymousProcessView.js, is commented out of
+#     mock/src/test/qunit/tests/main.js and so runs against the AMD build no more than against the
+#     ES module one. Writing that suite is not this task's, and an import check must not be read
+#     as one.
+#   - mock reaches 38 of ui-commons' 79 modules and 5 of ui-user's 14 (ui/AMD-PARITY.md, "What
+#     the consumer actually covers"). Neither suite says anything about the rest.
+#   - Nothing here builds openam-ui-ria, openidm-ui or openig-ui. The consumer that matters is
+#     task 3.7's and the gate is task 3.8's.
+#
+# It does not duplicate build.yml. That job builds the whole reactor and its `mvn verify` already
+# runs the QUnit suite against the Maven `commons.ui:user:zip:www` -- the distribution the
+# packages replace. Nothing in it produces or touches target/npm.
+name: UI dual build
+
+on:
+  # The branch list is build.yml's, minus sustaining/2.4.x: the dual build does not exist on that
+  # branch, so a run there would fail on a missing `build:npm` script rather than report anything.
+  #
+  # The two path lists are duplicated rather than shared through a YAML anchor: GitHub Actions
+  # does not support anchors or aliases in workflow files. Keep them in step.
+  push:
+    branches: [ 'master', 'features/**', 'issues/**' ]
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-dual-build.yml'
+  pull_request:
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-dual-build.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Nothing here writes. It checks out, builds, and runs two test suites.
+permissions:
+  contents: read
+
+jobs:
+  dual-build:
+    # The name is part of the report: a checks list showing a green "UI dual build" should not
+    # invite the reading that the whole of commons has been verified against both module systems.
+    name: 'Both commons UI builds from one emit -- QUnit over the AMD build, Vitest over the ES module build'
+    runs-on: 'ubuntu-latest'
+    # A cold Maven repository here means maven-external-dependency-plugin fetching ~58
+    # commons.ui.libs artifacts from a dozen CDNs, plus Puppeteer downloading Chrome for
+    # grunt-contrib-qunit. On a warm cache the whole job is a couple of minutes. Anything near 30
+    # means something is wedged.
+    timeout-minutes: 30
+    env:
+      MAVEN_OPTS: -Dhttps.protocols=TLSv1.2 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dmaven.wagon.http.retryHandler.requestSentEnabled=true -Dmaven.wagon.http.retryHandler.count=10
+    steps:
+      - uses: actions/checkout@v6
+
+      # Java 11 and not the full matrix build.yml runs. Nothing this job asserts is about the JDK
+      # -- these are pom-packaging modules whose work is done by frontend-maven-plugin, an
+      # assembly and a dependency copy -- so a matrix here would multiply the CDN fetches and the
+      # Chrome download for no new information. 11 rather than a newer one because it is what
+      # deploy.yml and release.yml build the published artifacts with.
+      - name: Java 11
+        uses: actions/setup-java@v5
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+
+      # v20.12.2 exactly, because that is what frontend-maven-plugin installs and uses for every
+      # npm and Grunt invocation inside the Maven build (ui/pom.xml, install-node-and-npm). The
+      # steps below run npm and Vitest outside Maven, against the node_modules that build
+      # populates; running them on a different Node would mean the emit and the tests over it
+      # disagreed about the runtime, which is the one variable this job is least able to explain.
+      - name: Node 20.12.2
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20.12.2'
+          cache: 'npm'
+          cache-dependency-path: |
+            ui/commons/package-lock.json
+            ui/user/package-lock.json
+
+      # Its own key namespace, with build.yml's as the last fallback. That one is written on push
+      # to master and so is the only entry a first run on a new branch can restore; without it the
+      # ~58 CDN fetches happen on every new branch.
+      #
+      # Note what is NOT here: any form of `mvn clean`. `clean-external` is bound to the clean
+      # phase on ui/pom.xml and deletes those same CDN-provisioned artifacts from the local
+      # repository -- it would cold-bust this cache on every run, and turn any one of a dozen CDNs
+      # moving a file into a red build. Nothing needs cleaning on a fresh runner. The one tree
+      # this job does remove, mock/target, is removed with `rm -rf` for that reason.
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-ui-${{ hashFiles('pom.xml', 'ui/**/pom.xml', 'maven-external-dependency-plugin/**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-ui-
+            ${{ runner.os }}-m2-repository
+
+      # `npm ci` and not `npm install`, and unlike the sibling jobs in OpenAM that is the right way
+      # round here: ui/.gitignore blanket-ignores package-lock.json and then re-includes these two
+      # explicitly (`!commons/package-lock.json`, `!user/package-lock.json`), because tasks 3.2 and
+      # 3.3 gave these modules a toolchain worth pinning -- the ES module generator and the Babel
+      # presets that decide what the emitted package contains. Both files are tracked; verified
+      # with `git ls-files`, and the rehearsal for this job ran on a `git archive HEAD` checkout so
+      # that an untracked lock file in a working tree could not be what makes it pass.
+      #
+      # ui/mock is deliberately absent from this step. Its lock file is NOT committed -- the
+      # .gitignore re-includes only the two modules that emit a package -- so `npm ci` there would
+      # exit EUSAGE. Its dependencies are installed by frontend-maven-plugin's own `npm install`
+      # during the Maven build below, exactly as they are today.
+      #
+      # This runs BEFORE Maven so that the tree the build uses is the locked one. Maven's own
+      # `npm install` execution then finds a satisfied tree and leaves the lock files alone; the
+      # step at the end of this job asserts that it did.
+      - name: Install the pinned toolchains
+        run: |
+          npm ci --prefix ui/commons
+          npm ci --prefix ui/user
+
+      # The parent pom, on its own. ui/pom.xml resolves it from disk through <relativePath> while
+      # building, but maven-external-dependency-plugin below is installed as an artifact, and
+      # resolving THAT later reads its pom from the local repository, which needs the parent there
+      # too.
+      - name: Install the parent pom
+        run: mvn --batch-mode --errors --non-recursive install --file pom.xml
+
+      # maven-external-dependency-plugin is declared at ${project.version} and lives in this
+      # repository, so it has to be installed before anything can use it -- Maven cannot resolve a
+      # plugin built in the same reactor session.
+      #
+      # A separate invocation rather than `-pl ... -am` from the root: `-am` from a root whose
+      # module list contains ui would pull the UI modules into the reactor, and that is the shape
+      # this job must not have. Building the one module by its own pom keeps the reactor to it.
+      - name: Install maven-external-dependency-plugin
+        run: mvn --batch-mode --errors install --file maven-external-dependency-plugin/maven-external-dependency-plugin/pom.xml
+
+      # THE STEP THAT PRODUCES BOTH OUTPUTS. `grunt build` is bound to `compile` for each ui
+      # module (ui/pom.xml), and for ui/commons and ui/user that task is `eslint` + `npm-package`
+      # -- the emitter that writes target/npm/esm, target/npm/amd and target/npm/www. So one
+      # `mvn install` here emits both builds of both packages, assembles the www zips, and runs
+      # ui/mock's QUnit suite against the Maven `commons.ui:user:zip:www`.
+      #
+      # That QUnit run is the baseline the AMD-build run further down is compared against. It is
+      # free -- the Maven build does it anyway -- and it is what makes the comparison meaningful:
+      # both numbers come from the same runner, the same Chrome and the same mock sources, so a
+      # difference between them is about the AMD build and nothing else.
+      #
+      # `-f ui/pom.xml` and not the root reactor: build.yml already builds everything, and the
+      # rest of the repository has no bearing on what this job asserts.
+      #
+      # Through tee rather than redirected: the log is read by two later steps, and a redirect
+      # shows nothing until the build ends -- at the one moment the log is the only evidence there
+      # is, if timeout-minutes kills it.
+      - name: Build the UI modules -- emits both builds, runs QUnit against the www zip
+        shell: bash
+        run: |
+          status=0
+          mvn --batch-mode --errors --update-snapshots install --file ui/pom.xml 2>&1 | tee "$RUNNER_TEMP/mvn-ui.log" || status=$?
+          exit "$status"
+
+      # Both trees, for both packages, present and non-empty. Cheap, and it is the literal first
+      # half of the requirement -- "both builds SHALL be produced". Without it, a change that
+      # stopped emitting one of the four trees would surface as a confusing resolution failure in
+      # a later step, or not at all.
+      - name: Assert both builds were produced
+        shell: bash
+        run: |
+          fail=0
+          for module in commons user; do
+            for tree in esm amd; do
+              dir="ui/$module/target/npm/$tree"
+              if [ ! -d "$dir" ]; then
+                echo "::error::$dir was not produced"
+                fail=1
+                continue
+              fi
+              count=$(find "$dir" -name '*.js' -type f | wc -l | tr -d ' ')
+              echo "$dir: $count .js files"
+              if [ "$count" -eq 0 ]; then
+                echo "::error::$dir is empty"
+                fail=1
+              fi
+            done
+          done
+          exit "$fail"
+
+      # The ES module build, imported and called. build/npm-package.js asserts the SHAPE of what it
+      # emitted -- counts, paths, no surviving loader API -- and every one of those checks once
+      # passed on a tree whose ModuleLoader.load was returning the module namespace instead of the
+      # module at all 20 call sites. Nothing that inspects text catches that; only importing the
+      # tree does. See the header of ui/commons/build/verify-esm.mjs.
+      #
+      # Both packages, because ui-user's ES module build has nothing else asserting it at all.
+      - name: Verify the ES module builds import
+        run: |
+          npm run verify:esm --prefix ui/commons
+          npm run verify:esm --prefix ui/user
+
+      # THE ES MODULE SIDE OF THE COMPARISON. 9 files, 32 tests, resolving every commons id to
+      # target/npm/esm -- the tree the step above built, not src/main/js. ui/commons/
+      # vitest.config.mjs is where that resolution is configured and where the reasoning lives.
+      #
+      # ui/user follows with its import check over all fourteen of its emitted modules. Both logs
+      # go to one file because the summary step reads a total from it, and because a failure in
+      # either is the same kind of failure: the ES module build does not load.
+      - name: Test the ES module builds
+        shell: bash
+        run: |
+          status=0
+          {
+            npm run test:esm --prefix ui/commons &&
+            npm run test:esm --prefix ui/user
+          } 2>&1 | tee "$RUNNER_TEMP/vitest.log" || status=$?
+          exit "$status"
+
+      # THE AMD SIDE. Task 3.4's procedure (ui/AMD-PARITY.md, "Step 2 -- the same consumer,
+      # pointed at the AMD output"), which measured the AMD build interchangeable with the www zip
+      # by hand. This is that measurement made repeatable.
+      #
+      # `rm -rf` and then `process-resources` rather than reusing the tree the Maven build left:
+      # `grunt build` has already run r.js over that one, so target/www/main.js is the optimised
+      # bundle rather than mock's entry point, and running the composition again on top of it
+      # would optimise an optimised bundle. Deleting the directory also drops
+      # maven-dependency-plugin's markers, without which the `unpack` execution would skip
+      # re-unpacking the zip. `rm -rf`, never `mvn clean`, for the reason given at the cache step.
+      #
+      # `process-resources` is the phase that composes: it unpacks commons.ui:user:zip:www, copies
+      # the commons.ui.libs artifacts into libs/ and css/, and copies mock's own sources over the
+      # top. `compile` -- where `grunt build` is bound -- is deliberately not reached, so the
+      # overlay lands on a pristine tree and the Grunt run below is the only one over it.
+      #
+      # The four trees are overlaid in the order AMD-PARITY.md used: each package's AMD modules
+      # and then its static payload. The third-party files from the zip are left in place, because
+      # the packages declare them as npm peers and a real consumer supplies them separately; that
+      # is the faithful emulation, and it is what task 3.4 measured.
+      - name: Compose ui/mock against the AMD build
+        shell: bash
+        run: |
+          rm -rf ui/mock/target
+          mvn --batch-mode --errors process-resources --file ui/mock/pom.xml
+          cp -R ui/commons/target/npm/amd/. ui/mock/target/www/
+          cp -R ui/commons/target/npm/www/. ui/mock/target/www/
+          cp -R ui/user/target/npm/amd/.    ui/mock/target/www/
+          cp -R ui/user/target/npm/www/.    ui/mock/target/www/
+
+      # The overlay is the whole claim of the next step, so it is checked rather than assumed. A
+      # `cp -R` into a directory that exists but is not the one the loader reads would leave the
+      # consumer on the zip's copies and the QUnit run would go green having tested nothing this
+      # job is about -- the failure mode with no symptom.
+      #
+      # Every .js file in both AMD trees, compared byte for byte against the file at the same path
+      # under mock/target/www. AMD-PARITY.md verified the same property by hand for its step 2.
+      - name: Assert ui/mock is consuming the AMD build
+        shell: bash
+        run: |
+          fail=0
+          checked=0
+          for module in commons user; do
+            root="ui/$module/target/npm/amd"
+            while IFS= read -r rel; do
+              checked=$((checked + 1))
+              if ! cmp -s "$root/$rel" "ui/mock/target/www/$rel"; then
+                echo "::error::ui/mock/target/www/$rel is not the file $root/$rel emitted"
+                fail=1
+              fi
+            done < <(cd "$root" && find . -name '*.js' -type f | sed 's|^\./||')
+          done
+          if [ "$checked" -eq 0 ]; then
+            echo "::error::no AMD module files were found to check -- the overlay cannot have happened"
+            fail=1
+          elif [ "$fail" -eq 0 ]; then
+            echo "$checked AMD module files verified identical in mock's composition directory"
+          else
+            echo "$checked AMD module files compared; see the errors above"
+          fi
+          exit "$fail"
+
+      # The identical `grunt build` mock runs under Maven -- eslint, less, requirejs, sync:test,
+      # qunit -- over the composition the previous step built. Invoked through mock's own grunt
+      # binary because Maven is not driving this one; node_modules is already populated from the
+      # Maven build's `npm install`.
+      #
+      # Nothing under ui/mock is edited by this job, and that is the assertion: task 3.4's verdict
+      # was that the AMD build is interchangeable with the zip "judged by a consumer that was not
+      # modified", and a consumer this job had to patch would be the answer *not interchangeable*.
+      - name: Test the AMD build through ui/mock
+        shell: bash
+        working-directory: ui/mock
+        run: |
+          status=0
+          ./node_modules/.bin/grunt build 2>&1 | tee "$RUNNER_TEMP/grunt-amd.log" || status=$?
+          exit "$status"
+
+      # THE COMPARISON. Both QUnit runs already fail their own step if a test fails -- grunt-
+      # contrib-qunit exits non-zero -- so what is left to catch here is the quiet one: the same
+      # suite running a DIFFERENT NUMBER of tests against the two trees. A module that fails to
+      # load under the AMD build takes its tests out of the run rather than failing them, and the
+      # reported line still says "0 failed".
+      - name: Compare the two AMD runs
+        shell: bash
+        run: |
+          # `|| true` on both, and it is not defensive noise: the runner's shell is `bash -eo
+          # pipefail`, so a grep that matches nothing fails the pipeline and takes the whole step
+          # down at the assignment -- skipping the two checks below and reporting nothing about
+          # why. The empty-string check is what should speak here.
+          line_from () {
+            grep -E '[0-9]+ tests completed' "$1" | tail -n 1 | sed 's/^.*>> //'
+          }
+          zip_line=$(line_from "$RUNNER_TEMP/mvn-ui.log" || true)
+          amd_line=$(line_from "$RUNNER_TEMP/grunt-amd.log" || true)
+
+          echo "www zip  : ${zip_line:-<no QUnit summary found>}"
+          echo "AMD build: ${amd_line:-<no QUnit summary found>}"
+
+          if [ -z "$zip_line" ] || [ -z "$amd_line" ]; then
+            echo "::error::a QUnit summary line is missing -- one of the two runs did not report"
+            exit 1
+          fi
+
+          zip_count=${zip_line%% *}
+          amd_count=${amd_line%% *}
+          if [ "$zip_count" != "$amd_count" ]; then
+            echo "::error::the AMD build ran $amd_count tests where the www zip ran $zip_count -- a module is failing to load, not failing its tests"
+            exit 1
+          fi
+          echo "both trees ran $zip_count tests"
+
+      # `npm ci` above is only as good as the lock files staying authoritative, and the thing most
+      # able to invalidate them is inside this job: frontend-maven-plugin runs `npm install`, not
+      # `npm ci`, at `initialize` for every ui module. With a lock that matches package.json that
+      # is a no-op -- measured through a full `mvn install -f ui/pom.xml`, both files untouched --
+      # and if it ever stops being one, this says so here rather than leaving `npm ci` to start
+      # failing on a later branch for reasons nobody can place.
+      #
+      # Only these two files, not `git status`: mock's lock is untracked by design and the build
+      # writes target/ directories everywhere. A clean-tree assertion over the whole build is task
+      # 3.7's, and it needs more than this job to be true.
+      - name: Assert the lock files were not rewritten
+        shell: bash
+        run: |
+          if ! git diff --exit-code -- ui/commons/package-lock.json ui/user/package-lock.json; then
+            echo "::error::the Maven build rewrote a committed lock file; regenerate and commit it, or npm ci will start failing"
+            exit 1
+          fi
+          echo "ui/commons/package-lock.json and ui/user/package-lock.json unchanged"
+
+      # The scope of the run, on the summary page. The same text is in this file and in the step
+      # logs, and that is not enough: what is being guarded against is someone reading a green tick
+      # and stopping, and a green tick links to the summary rather than to the tail of a step.
+      #
+      # always(), because a red run has to declare its scope too. Never fails the job.
+      - name: What this run did and did not cover
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo '## UI dual build'
+            echo
+            echo 'Both builds of `@openidentityplatform/ui-commons` and `@openidentityplatform/ui-user`'
+            echo 'were emitted by one `mvn install` and both were exercised over that emit.'
+            echo
+            echo '| Build | Suite | Result |'
+            echo '| --- | --- | --- |'
+            # Every extraction here ends in `|| true`. This step runs on failure as well as on
+            # success, so the logs it reads may be missing or truncated -- and under the runner's
+            # `bash -eo pipefail` a grep that matches nothing would abort the step, turning the
+            # one step that must never fail the job into a second red tick explaining nothing.
+            zip_line=$(grep -E '[0-9]+ tests completed' "$RUNNER_TEMP/mvn-ui.log" 2>/dev/null | tail -n 1 | sed 's/^.*>> //' || true)
+            amd_line=$(grep -E '[0-9]+ tests completed' "$RUNNER_TEMP/grunt-amd.log" 2>/dev/null | tail -n 1 | sed 's/^.*>> //' || true)
+            # Two `Tests  N passed` lines in this log, ui/commons' then ui/user's, so they are
+            # taken by position rather than by tail -1.
+            esm_commons=$(grep -E '^ +Tests +[0-9]' "$RUNNER_TEMP/vitest.log" 2>/dev/null | sed -n '1s/^ *Tests *//p' || true)
+            esm_user=$(grep -E '^ +Tests +[0-9]' "$RUNNER_TEMP/vitest.log" 2>/dev/null | sed -n '2s/^ *Tests *//p' || true)
+            echo "| \`commons.ui:user:zip:www\` (baseline) | QUnit via ui/mock | ${zip_line:-did not report} |"
+            echo "| \`target/npm/amd\` | QUnit via ui/mock | ${amd_line:-did not report} |"
+            echo "| ui-commons \`target/npm/esm\` | Vitest, ported suite | ${esm_commons:-did not report} |"
+            echo "| ui-user \`target/npm/esm\` | Vitest, import check | ${esm_user:-did not report} |"
+            echo
+            echo '**Not covered by this job.** The ES module suite is 32 tests to the AMD suite'"'"'s 33:'
+            echo '`src/test/qunit/form2js.js` exercises maxatwork/form2js, which has no npm package and'
+            echo 'nothing in the ES module build. `ui/user`'"'"'s row is an **import check, not behaviour**:'
+            echo 'it has no behavioural tests on either build -- its one QUnit file is commented out of'
+            echo 'mock'"'"'s test list. ui/mock reaches 38 of ui-commons'"'"' 79 modules and 5 of'
+            echo 'ui-user'"'"'s 14 (ui/AMD-PARITY.md). No product consumer is built here: openam-ui-ria is'
+            echo 'task 3.7'"'"'s and the phase-0a gate over it is task 3.8'"'"'s.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Everything the three steps above teed, when one of them went red. The QUnit failure detail
+      # and the Maven reactor summary are both long enough that reading them in the step log is
+      # unpleasant, and the Vitest log carries the assertion diff.
+      - name: Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ui-dual-build-logs
+          path: |
+            ${{ runner.temp }}/mvn-ui.log
+            ${{ runner.temp }}/grunt-amd.log
+            ${{ runner.temp }}/vitest.log
+          if-no-files-found: ignore
+          retention-days: 7
