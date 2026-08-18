@@ -6,7 +6,7 @@
   "//license": "CDDL-1.1, matching @openidentityplatform/ui-commons and for the same reason: the repository's own LICENSE.md is authoritative over the per-file header boilerplate, which still names legal/CDDLv1.0.txt. build/npm-package.js copies ../../LICENSE.md into the payload and asserts that its heading names this version, so the declared identifier and the shipped text cannot drift apart. Reconciling the source headers is a repository-wide edit and stays out of scope for a build change.",
   "private": true,
   "//private": "Kept deliberately per design decision D18. Phase 1 distributes this package as a Maven-attached tarball produced by `npm pack`, which honours \"private\"; only `npm publish` refuses. Task 3.11 removes this, after the phase-1 gate in 3.8.",
-  "//version": "Must equal ${project.version} in commons/ui/user/pom.xml. Task 3.6 adds a build check that fails on drift.",
+  "//version": "Must equal ${project.version} in commons/ui/user/pom.xml. Enforced by build/check-version.js, run by frontend-maven-plugin's `check-npm-version` execution at `initialize` (task 3.6): npm names the packed tarball from this field while build-helper-maven-plugin names the artifact it attaches from ${project.version}, so drift attaches a path that does not exist and fails at `install` with an unrelated message. The check is declared in the module pom, which merges after the parent's pluginManagement executions, so it runs just after `npm install` rather than before it - a drifted build therefore rewrites package-lock.json before failing. Accepted so that ui/mock, which has no such check to make, is not dragged in.",
   "//exports": "Emitted by build/npm-package.js, which omits the AMD build from the map on purpose — RequireJS and r.js never read package.json. Unlike ui-commons this package emits no \".\" entry: it has no aggregate module. ui-commons points \".\" at its main.js; there is no equivalent here, and inventing one would mean shipping an entry point no consumer of the AMD build has ever had.",
   "repository": {
     "type": "git",
@@ -14,6 +14,7 @@
     "directory": "ui/user"
   },
   "scripts": {
+    "check:version": "node build/check-version.js",
     "build:npm": "node build/npm-package.js",
     "verify:esm": "node build/verify-esm.mjs",
     "test:esm": "vitest run",

@@ -6,7 +6,7 @@
   "//license": "DECIDED: the repository's own LICENSE.md is authoritative, so this is CDDL-1.1 and that file ships in the tarball. Both halves matter. (1) Version: this field said CDDL-1.0 while the repository root LICENSE.md is CDDL **1.1**; they cannot both govern the same files, and the repository-level licence wins over the per-file header boilerplate. (2) Text: the packed tarball carried a declared licence and nothing to read, because this directory has no LICENSE file and `files` listed none. build/npm-package.js now copies ../../LICENSE.md into the payload and asserts that its heading names the same version as this field, so the two cannot drift apart again silently — that drift is exactly what went unnoticed here. RESIDUAL, not fixed by this task: every source header in this module still says 'obtain a copy of the License at legal/CDDLv1.0.txt'. Reconciling those headers is a repository-wide edit across far more than commons/ui, so it is out of scope for a build change; it is recorded here rather than left to be rediscovered.",
   "private": true,
   "//private": "Kept deliberately per design decision D18. Phase 1 distributes this package as a Maven-attached tarball produced by `npm pack`, which honours \"private\"; only `npm publish` refuses. Task 3.11 removes this, after the phase-1 gate in 3.8.",
-  "//version": "Must equal ${project.version} in commons/ui/commons/pom.xml. Task 3.6 adds a build check that fails on drift.",
+  "//version": "Must equal ${project.version} in commons/ui/commons/pom.xml. Enforced by build/check-version.js, run by frontend-maven-plugin's `check-npm-version` execution at `initialize` (task 3.6): npm names the packed tarball from this field while build-helper-maven-plugin names the artifact it attaches from ${project.version}, so drift attaches a path that does not exist and fails at `install` with an unrelated message. The check is declared in the module pom, which merges after the parent's pluginManagement executions, so it runs just after `npm install` rather than before it - a drifted build therefore rewrites package-lock.json before failing. Accepted so that ui/mock, which has no such check to make, is not dragged in.",
   "//exports": "The AMD build under ./amd is deliberately NOT in the emitted \"exports\" map. RequireJS and r.js resolve a module id by concatenating baseUrl (or a `paths` prefix) with the id — they never read package.json, which was measured against requirejs 2.3.7 with a valid exports field present and ignored (NOTES-dual-build.md section 2, case A). An AMD consumer reaches ./amd through a narrow RequireJS `paths` entry pinned to org/forgerock/commons/ui/common, or by copying ./amd into its composition directory. See NPM-PACKAGE.md and the header of build/npm-package.js. The emitted package.json is written by that script; the \"exports\" map there covers the ES module build and the static ./www payload only.",
   "repository": {
     "type": "git",
@@ -14,6 +14,7 @@
     "directory": "ui/commons"
   },
   "scripts": {
+    "check:version": "node build/check-version.js",
     "build:npm": "node build/npm-package.js",
     "verify:esm": "node build/verify-esm.mjs",
     "test:esm": "vitest run",

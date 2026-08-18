@@ -56,6 +56,40 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
+                <executions>
+                    <!-- npm names the tarball from package.json's version, Maven names the
+                         attached artifact from ${project.version}. If they drift the two name
+                         different files and the build fails at `install` with an unrelated
+                         message, so fail here instead, with one that says what is wrong. -->
+                    <execution>
+                        <id>check-npm-version</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <arguments>run check:version</arguments>
+                            <environmentVariables>
+                                <PROJECT_VERSION>${project.version}</PROJECT_VERSION>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+                    <!-- Pack the tree the `grunt` execution emitted at `compile`. The working
+                         directory MUST be target/npm: from ${basedir} npm packs 701 files of
+                         src/, target/ and pom.xml under the same tarball name, with no
+                         top-level amd/, esm/ or www/ at all, and nothing warns. -->
+                    <execution>
+                        <id>npm-pack</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <workingDirectory>${project.build.directory}/npm</workingDirectory>
+                            <arguments>pack --pack-destination ${project.build.directory}</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -110,6 +144,40 @@
                 </executions>
             </plugin>
 
+            <!-- LAST in <plugins> on purpose. Within `package` Maven runs executions in
+                 effective plugin-declaration order, so this sits after frontend-maven-plugin,
+                 which writes the file it attaches. Measured: the reverse order still succeeds
+                 through `install`, because attach-artifact only records a File and
+                 maven-install-plugin reads it a phase later - so today this is robustness and
+                 legibility, not correctness. It becomes correctness the moment anything reads
+                 the attached-artifact list inside `package` (an assembly moduleSet, a shade, a
+                 signing step), or if npm-pack moves to a later phase. Explicit <version> is
+                 required: build-helper has no managed version in this tree - its only mention
+                 in the root pom is inside the org.eclipse.m2e lifecycle-mapping block, which
+                 is an IDE hint. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-npm-tarball</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${project.build.directory}/openidentityplatform-ui-commons-${project.version}.tgz</file>
+                                    <type>tgz</type>
+                                    <classifier>npm</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
  

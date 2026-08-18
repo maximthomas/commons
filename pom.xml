@@ -375,6 +375,16 @@
             	<type>zip</type>
                 <version>${project.version}</version>
             </dependency>
+            <!-- The packed npm tarball, attached beside the www zip by
+                 build-helper-maven-plugin (task 3.6 / D18). Distinct dependencyManagement key
+                 (groupId:artifactId:type:classifier), so the zip:www consumers are untouched. -->
+            <dependency>
+                <groupId>org.openidentityplatform.commons.ui</groupId>
+                <artifactId>user</artifactId>
+                <classifier>npm</classifier>
+                <type>tgz</type>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.openidentityplatform.commons.http-framework</groupId>
                 <artifactId>client-apache-async</artifactId>
@@ -654,6 +664,16 @@
 		      <artifactId>commons</artifactId>
 		      <type>zip</type>
 		      <classifier>www</classifier>
+		      <version>${project.version}</version>
+		    </dependency>
+		    <!-- The packed npm tarball, attached beside the www zip by
+		         build-helper-maven-plugin (task 3.6 / D18). Distinct dependencyManagement key
+		         (groupId:artifactId:type:classifier), so the zip:www consumers are untouched. -->
+		    <dependency>
+		      <groupId>org.openidentityplatform.commons.ui</groupId>
+		      <artifactId>commons</artifactId>
+		      <type>tgz</type>
+		      <classifier>npm</classifier>
 		      <version>${project.version}</version>
 		    </dependency>
             <dependency>
