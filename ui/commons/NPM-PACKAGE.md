@@ -152,6 +152,147 @@ Copy `amd/` into the composition directory ahead of the consumer's own sources, 
 a product file at the same path still overrides the package's, and the files then go through the
 consumer's own Babel step like any other.
 
+## When the AMD build goes away
+
+**Why there are two builds at all.** Every module in this package is written as AMD and loaded by
+RequireJS; the ES module tree is generated from that same source. The AMD tree exists so that
+products which have not moved to ES modules keep consuming commons unchanged, while products that
+have moved consume the ES module tree — same package, same release, nobody migrating in lockstep
+with anyone else. It is a bridge, and a bridge nobody dismantles is just a second codebase to keep
+in agreement with the first.
+
+**The condition that ends it.** The `amd/` tree is deleted once **`openidm-ui` and `openig-ui` are
+both on ES modules**. Those two products are why the AMD half is built; when neither needs it, it
+goes. That is the whole trigger — a condition, not a date and not an intention. Two zeros are
+necessary and not sufficient: the three caveats below have to hold as well.
+
+### Checking whether the condition is met
+
+Both products keep their shipped modules under `src/main/js`, and an AMD module is one that calls
+`define(`. From the root of each checkout:
+
+```sh
+# OpenIdentityPlatform/OpenIDM
+git ls-files 'openidm-ui/*/src/main/js/**/*.js' | xargs grep -l 'define(' | wc -l
+
+# OpenIdentityPlatform/OpenIG
+git ls-files 'openig-ui/src/main/js/**/*.js' | xargs grep -l 'define(' | wc -l
+```
+
+**245** and **48** when this was written. The condition is met when both print **0**. Counting files
+that call `define(` rather than files that exist is the point: an ESM migration does not delete the
+modules, it stops them being AMD.
+
+Two things about the count itself:
+
+- **It reaches 245 of 247 tracked `.js` files, and 48 of 49.** A `**/*.js` pathspec requires at
+  least one directory below `src/main/js`, so it skips three depth-1 files:
+  `openidm-ui-admin/src/main/js/main.js`, `openidm-ui-enduser/src/main/js/main.js` and
+  `openig-ui/src/main/js/main.js`. None of them calls `define(`, so they do not change the number —
+  but all three are the RequireJS bootstrap (`require.config({ paths, shim })`), which is the most
+  AMD thing in either repository and the last of it either product removes. Read those three; do
+  not expect the count to tell you about them.
+- **Print the denominator too** — the same `git ls-files` without the `grep`, which should say 245
+  and 48. A pathspec that matches nothing pipes nothing to `grep` and also prints **0**, so a
+  migration that moved the sources out of `src/main/js` looks exactly like a migration that
+  finished. For the same reason, note that `define(` is a substring match and not a parse:
+  `customElements.define(` would count.
+
+Three things the number says nothing about, each of which has to hold as well:
+
+- **The test suites are AMD too**, and they are not in it: 199 of OpenIDM's 200 files under
+  `openidm-ui/*/src/test/**/*.js`, 5 of OpenIG's 6 under `openig-ui/src/test/**/*.js`. A product
+  whose shipped modules are ES modules but whose QUnit suite still resolves commons ids through
+  RequireJS is still an AMD consumer. Same command with `src/test` in place of `src/main/js`.
+- **What each product actually depends on.** Neither resolves this package at all today — both
+  consume the Maven zip: `openig-ui` declares `commons.ui:commons:zip:www`, `openidm-ui-admin` and
+  `openidm-ui-enduser` declare `commons.ui:user:zip:www`. The check is
+  `grep -rn 'commons\.ui</groupId>' --include=pom.xml . | grep -v /target/` in each checkout —
+  without the closing tag it returns well over a hundred `commons.ui.libs` hits in either. The
+  shapes to look for on this side are a RequireJS `paths` entry into `amd/` or a copy step out of
+  it, both documented above.
+- **`openam-ui-ria` consumes `amd/` as well.** It is absent from the condition because it is the
+  migration this package was built for: it takes the AMD tree during phase 1 of its own move to
+  Vite and leaves it in phase 2. 208 of its 213 `.js` files under
+  `openam-ui/openam-ui-ria/src/main/js` still call `define(` — one of them a vendored UMD library.
+  The 31 `.jsm` and 15 `.jsx` files in the same tree are the already-migrated half and call it
+  nowhere, so quote the denominator as `.js` files and not as files. Check it the same way before
+  deleting anything.
+
+### What the deletion changes
+
+**The `exports` map: nothing.** `./amd/*` was never in it, for the reason the previous section
+gives — RequireJS and `r.js` never read `package.json`. The map ships describing `esm/`, `www/` and
+`package.json`, and describes exactly the same thing afterwards. Two other keys in the emitted
+`package.json` do change: `files`, which lists `amd` and must stop, and `//exports` — the note
+printed beside the map, whose entire subject is why the AMD build is not in it. Its source is
+`exportsNote` in each module's `build/npm-package.js`.
+
+**The build** — `ui/build/npm-package-lib.js` plus each module's `build/npm-package.js`:
+
+- The **Babel step is AMD-only**. `@babel/core`, `@babel/preset-env` and
+  `@babel/plugin-transform-classes` are there to transpile the AMD tree with the presets
+  `openam-ui-ria` applies to this code today; the ES module tree comes out of `@buxlabs/amd-to-es6`
+  untranspiled. All three devDependencies leave both packages with the tree.
+- `expected` loses its `amd` count — 65 here, 14 in `ui-user` — and with it the per-directory
+  assertion that reports `payload count mismatch for 'amd': expected 65, emitted 64` before any
+  path diff.
+- The nested `amd/package.json` marker (`{"type": "commonjs", "sideEffects": true}`) stops being
+  written. `esm/`'s stays: it is what tells Node and every bundler that that tree is ES modules.
+- `build/expected-payload.txt` loses its `amd/` lines — 66 here (65 modules plus the nested marker)
+  and 15 in `ui-user`. Regenerate with `npm run update:payload-record` and commit the diff with the
+  change that caused it, like any other deliberate payload change; `MANIFEST.txt` in the built
+  package follows from the same walk.
+- **`ui/user/build/verify-esm.mjs` fails outright — do this one first.** Its eighth and last check,
+  "the AMD and ES module builds expose exactly the same module ids", walks `AMD_ROOT`
+  (`target/npm/amd`) with `fs.readdirSync`, so a missing tree is an `ENOENT` and not a clean
+  failure. That takes down `npm run verify:esm`, `grunt verify`, and the workflow step **`Verify
+  the ES module builds import`**, which otherwise looks like it survives untouched. Delete the
+  check with the tree it compares against, and correct `ui/user/NPM-PACKAGE.md` in the same commit:
+  "8 checks" near the top becomes 7, and the fourth bullet of its static-check list goes. Worth
+  deciding rather than discovering: that check is the only structural enforcement of D19's shared
+  id space for `ui-user`, and it goes with it.
+- **`.github/workflows/ui-dual-build.yml` loses its entire AMD half** — four steps go
+  (`Compose ui/mock against the AMD build`, `Assert ui/mock is consuming the AMD build`, `Test the
+  AMD build through ui/mock`, `Compare the two AMD runs`) and four more are edited: `Assert both
+  builds were produced` loops `for tree in esm amd`; `What this run did and did not cover` reads
+  `grunt-amd.log`, prints a `target/npm/amd` row and the "32 tests to the AMD suite's 33"
+  paragraph; `Logs` uploads `grunt-amd.log`; and the job's own `name:` and the file's header
+  comment both describe the run as QUnit-over-AMD plus Vitest-over-ESM. Only the first of those
+  four fails the build if missed — but the summary step is the guard against reading a green tick
+  and stopping, so leaving it printing "did not report" defeats its purpose.
+- What the workflow change removes is the **second** run of the 33 QUnit tests, the one over
+  `target/npm/amd`. The tests themselves stay: the QUnit run inside `Build the UI modules` is a
+  different thing and survives, because it tests the Maven `www` zip rather than this tree — that
+  run is what `Compare the two AMD runs` was comparing against. So `src/test/qunit/form2js.js`,
+  the one file of the ten with no Vitest transcription (it exercises maxatwork/form2js, which has
+  no npm package and nothing in the ES module build), keeps its single test. What is genuinely
+  lost is coverage of the emitted npm AMD tree, not coverage of form2js. Nobody needs to write a
+  replacement.
+
+**Consumers.** An AMD consumer loses both routes documented above, the narrow RequireJS `paths`
+entry and the copy step. Nothing else in the package moves: the ES module tree, `www/` and the
+`exports` map are untouched, so an ES module consumer sees no change at all.
+
+**The documentation, including this section.** Both `NPM-PACKAGE.md` files describe the tree that
+is going: the `amd/` row in each "What the package contains" table, the per-tree file counts
+throughout, `ui-user`'s "8 checks", and the whole `## How an AMD consumer resolves a module id`
+section, which becomes a historical note or goes. `ui/AMD-PARITY.md` is the AMD tree's parity
+record end to end. Outside the docs, `ui/build/npm-package-lib.js` carries two AMD-era section
+comments ("WHY THE AMD BUILD IS NOT IN package.json exports", "TRANSPILE") and both `package.json`
+files explain AMD-only devDependencies in `//devDependencies` prose. While you are there:
+`requirejs` 2.3.7 is a devDependency of both packages — the loader itself, pinned at the version
+the resolution behaviour in `//exports` was measured against, rather than anything a module
+imports. Check whether it still has a job once the AMD tree is gone.
+
+**What this does not touch.** Two things it would be easy to fold in, and should not be:
+
+- **The Maven `commons.ui:commons:zip:www` artifact.** It is a different distribution of the same
+  AMD sources, with its own consumers and its own retirement question. Deleting `amd/` from this
+  package does not delete it, and this trigger says nothing about it.
+- **The sources.** `src/main/js` stays AMD — it is what the ES module tree is generated from.
+  Rewriting the sources as native ES modules is a separate and much larger decision.
+
 ## How an ES module consumer resolves a module id
 
 **By aliasing the id prefix, not by `exports` alone.** `exports` covers the first hop:

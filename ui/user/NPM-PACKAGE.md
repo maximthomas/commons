@@ -188,6 +188,22 @@ Note that a `paths` entry **wins over** a same-path file in the consumer's own t
 last-wins overlay. For this package that is not academic: it is exactly how the five overrides above
 would stop applying.
 
+## When the AMD build goes away
+
+The `amd/` tree in this package is deleted on the same condition as `ui-commons`': once
+`openidm-ui` and `openig-ui` are both on ES modules. The two packages are emitted by one shared
+builder and released together at one version, so they lose their AMD halves together.
+
+**`ui/commons/NPM-PACKAGE.md`, "When the AMD build goes away", is the record** — why the dual build
+exists at all, the commands that check whether the condition is met, and what the deletion changes
+in the `exports` map, in the build and for consumers. It carries this module's numbers alongside
+its own. The condition above is the only thing restated here, and nothing else is; if it ever
+changes, it has to change in both places.
+
+One item on that list lands in this package and fails the build if it is missed:
+`build/verify-esm.mjs`'s eighth check walks `target/npm/amd`, so it has to go with the tree — which
+also takes this document from 8 checks to 7.
+
 ## How an ES module consumer resolves a module id
 
 **By aliasing the id prefixes.** `exports` covers the first hop:
