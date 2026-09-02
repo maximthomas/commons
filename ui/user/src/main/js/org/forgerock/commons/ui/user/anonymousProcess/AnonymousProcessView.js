@@ -178,9 +178,9 @@ define([
         },
 
         setTranslationBase: function () {
-            _.each(["title", "completed", "failed", "tryAgain", "return"], function (key) {
+            _.each(["title", "completed", "failed", "tryAgain", "return"], _.bind(function (key) {
                 this.data.i18n[key] = this.i18nBase + "." + key;
-            }, this);
+            }, this));
         },
 
         restartProcess: function (e) {

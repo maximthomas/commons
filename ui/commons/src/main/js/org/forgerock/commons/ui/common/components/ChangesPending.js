@@ -46,7 +46,7 @@ define([
                     undoCallback: _.noop
                 };
 
-                this.data = _.extend(defaults, _.clone(args, true));
+                this.data = _.extend(defaults, _.cloneDeep(args));
                 this.element = args.element;
 
                 if (!this.data.watchedProperties) {
@@ -54,7 +54,7 @@ define([
                 }
 
                 if (!this.data.changes) {
-                    this.data.changes = _.clone(this.data.watchedObj, true);
+                    this.data.changes = _.cloneDeep(this.data.watchedObj);
                 }
 
                 this.parentRender(_.bind(function () {
@@ -86,9 +86,9 @@ define([
              */
             undo: function (e) {
                 e.preventDefault();
-                this.data.changes = _.clone(this.data.watchedObj, true);
+                this.data.changes = _.cloneDeep(this.data.watchedObj);
                 if (this.data.undoCallback) {
-                    this.data.undoCallback(_.pick(_.clone(this.data.watchedObj, true), this.data.watchedProperties));
+                    this.data.undoCallback(_.pick(_.cloneDeep(this.data.watchedObj), this.data.watchedProperties));
                 }
             },
 
@@ -98,7 +98,7 @@ define([
              * @param {object} changes - The object that contains changes from the base object this.data.watchedObj
              */
             makeChanges: function (changes) {
-                this.data.changes = _.clone(changes, true);
+                this.data.changes = _.cloneDeep(changes);
                 this.checkChanges();
             },
 
@@ -106,7 +106,7 @@ define([
              * Call to save your changes over to the watchedObj.
              */
             saveChanges: function () {
-                this.data.watchedObj = _.clone(this.data.changes, true);
+                this.data.watchedObj = _.cloneDeep(this.data.changes);
                 this.checkChanges();
             },
 
@@ -121,9 +121,9 @@ define([
              * Called to check if changes were done
              */
             isChanged: function () {
-                var isChanged = _.some(this.data.watchedProperties, function (prop) {
+                var isChanged = _.some(this.data.watchedProperties, _.bind(function (prop) {
                     return !this.compareObjects(prop, this.data.watchedObj, this.data.changes);
-                }, this);
+                }, this));
 
                 return isChanged;
             },
@@ -137,8 +137,8 @@ define([
              * @returns {boolean} whether two passed objects are equal
              */
             compareObjects: function(property, obj1, obj2) {
-                var val1 = _.clone(obj1[property], true),
-                    val2 = _.clone(obj2[property], true),
+                var val1 = _.cloneDeep(obj1[property]),
+                    val2 = _.cloneDeep(obj2[property]),
                     deleteEmptyProperties = function (obj) {
                         _.each(obj, function(prop, key) {
                             if (_.isEmpty(prop) && !_.isNumber(prop) && !_.isBoolean(prop)) {

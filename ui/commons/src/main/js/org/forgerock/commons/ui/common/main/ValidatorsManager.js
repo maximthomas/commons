@@ -44,9 +44,9 @@ define([
             obj.bindValidatorsForField(containerElement, $(this));
         });
 
-        _.each(obj.afterBindValidators, function (fn) {
+        _.each(obj.afterBindValidators, _.bind(function (fn) {
             fn.apply(this, _arguments);
-        }, this);
+        }, this));
     };
 
     // array of functions to invoke (in order) after bindValidators is executed

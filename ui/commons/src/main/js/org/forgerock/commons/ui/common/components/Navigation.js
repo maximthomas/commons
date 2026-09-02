@@ -297,9 +297,9 @@ define([
                 if (navObj.dropdown === true) {
                     navElement.dropdown = true;
 
-                    _.each(navObj.urls, function(obj){
+                    _.each(navObj.urls, _.bind(function(obj){
                         subs.push(self.buildNavElement(obj, this.isCurrent(obj.url)));
-                    }, this);
+                    }, this));
 
                     navElement.urls = subs;
                 }

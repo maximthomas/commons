@@ -105,7 +105,7 @@ define([
             var unSelectedQuestions = this.getUnSelectedQuestions();
 
             _.each(this.selectedQuestions, _.bind(function (questionView) {
-                var currentViewQuestion = _.findWhere(this.allQuestions, { id: questionView.getSelectedQuestionId() }),
+                var currentViewQuestion = _.find(this.allQuestions, { id: questionView.getSelectedQuestionId() }),
                     possibleQuestions = _.clone(unSelectedQuestions);
 
                 if (currentViewQuestion) {
@@ -127,7 +127,7 @@ define([
         },
 
         deleteQuestion: function (viewId) {
-            var questionView = _.findWhere(this.selectedQuestions, { id: viewId });
+            var questionView = _.find(this.selectedQuestions, { id: viewId });
 
             questionView.remove();
             this.selectedQuestions = _.without(this.selectedQuestions, questionView);

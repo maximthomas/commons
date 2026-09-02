@@ -117,9 +117,11 @@ define([
      */
     obj.parseQueryString = function (queryString) {
         if (queryString) {
-            return _.object(_.map(queryString.split("&"), function (pair) {
-                return _.map(pair.split("=", 2), decodeURIComponent);
-            }));
+            return _.reduce(queryString.split("&"), function (accumulator, pair) {
+                var keyValue = _.map(pair.split("=", 2), decodeURIComponent);
+                accumulator[keyValue[0]] = keyValue[1];
+                return accumulator;
+            }, {});
         }
         return {};
     };

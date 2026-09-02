@@ -76,7 +76,7 @@ define([
                 }
             }
             if (msg.escape === true) {
-                msg.message = _.escape(msg.message);
+                msg.message = _.escape(msg.message).replace(/`/g, "&#96;");
             }
             console.info(msg.type + ":", msg.message, msg);
             _this.list.push(msg);
@@ -134,7 +134,8 @@ define([
             }
 
             this.$el.append("<div role='alert' class='alert-system alert-message alert " + alertClass
-                + "'><i class='fa " + alertIcon + "'></i><span class='message'>" + _.escape(this.list[0].message)
+                + "'><i class='fa " + alertIcon + "'></i><span class='message'>"
+                + _.escape(this.list[0].message).replace(/`/g, "&#96;")
                 + "</span></div>");
             this.$el.find("div:last").fadeIn(300, function () {
                 _this.timer = window.setTimeout(_this.removeAndNext, delay);

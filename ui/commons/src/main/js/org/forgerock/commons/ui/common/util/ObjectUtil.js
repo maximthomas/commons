@@ -34,7 +34,7 @@ define([
         var pointerList;
         pointerList = function (obj) {
             return _.chain(obj)
-                .pairs()
+                .map(function (value, key) { return [key, value]; })
                 .filter(function (p) {
                     return p[1] !== undefined;
                 })
@@ -49,7 +49,7 @@ define([
                         });
                     }
                 })
-                .flatten(true)
+                .flattenDeep()
                 .value();
         };
 
@@ -202,7 +202,7 @@ define([
             newPointerMap = obj.toJSONPointerMap(newObject),
             previousPointerMap = obj.toJSONPointerMap(oldObject),
             newValues = _.chain(newPointerMap)
-                .pairs()
+                .map(function (value, key) { return [key, value]; })
                 .filter(function (p) {
                     if (_.isArray(previousPointerMap[p[0]]) && _.isArray(p[1])) {
                         return !obj.isEqualSet(previousPointerMap[p[0]], p[1]);
@@ -249,10 +249,12 @@ define([
                 .flatten()
                 // Filter out duplicates which might result from adding whole containers
                 // Have to stringify the patch operations to do object comparisons with uniq
-                .uniq(JSON.stringify)
+                .map(function (patch) { return JSON.stringify(patch); })
+                .uniq()
+                .map(function (patch) { return JSON.parse(patch); })
                 .value(),
             removedValues = _.chain(previousPointerMap)
-                .pairs()
+                .map(function (value, key) { return [key, value]; })
                 .filter(function (p) {
                     return obj.getValueFromPointer(newObjectClosure, p[0]) === undefined;
                 })
@@ -262,7 +264,9 @@ define([
                 })
                 // Filter out duplicates which might result from deleting whole containers
                 // Have to stringify the patch operations to do object comparisons with uniq
-                .uniq(JSON.stringify)
+                .map(function (patch) { return JSON.stringify(patch); })
+                .uniq()
+                .map(function (patch) { return JSON.parse(patch); })
                 .value();
 
         return newValues.concat(removedValues);

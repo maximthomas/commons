@@ -151,7 +151,7 @@ define([
             if (ValidatorsManager.formValidated(form)) {
 
                 changedProtected = _.chain(Configuration.loggedUser.getProtectedAttributes())
-                    .filter(function(attr) {
+                    .filter(_.bind(function(attr) {
                         if (_.has(formData, attr)) {
                             if (_.isEmpty(Configuration.loggedUser.get(attr)) && _.isEmpty(formData[attr])) {
                                 return false;
@@ -161,10 +161,10 @@ define([
                         } else {
                             return false;
                         }
-                    }, this)
-                    .map(function (attr) {
+                    }, this))
+                    .map(_.bind(function (attr) {
                         return this.$el.find("label[for=input-"+attr+"]").text();
-                    }, this)
+                    }, this))
                     .value();
 
                 if (changedProtected.length === 0) {

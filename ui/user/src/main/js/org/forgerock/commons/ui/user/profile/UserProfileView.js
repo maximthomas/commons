@@ -103,7 +103,7 @@ define([
                 });
 
                 // build the dynamically-registered tabs
-                $.when.apply($, _.map(this.dynamicTabs, function (tab) {
+                $.when.apply($, _.map(this.dynamicTabs, _.bind(function (tab) {
                     var promise = $.Deferred(),
                         tabDetail = tab.getTabDetail(),
                         tabPanel = $('<div role="tabpanel" class="tab-pane panel panel-default fr-panel-tab">');
@@ -121,7 +121,7 @@ define([
                         promise.resolve();
                     }, this));
                     return promise;
-                }, this)).then(_.bind(function () {
+                }, this))).then(_.bind(function () {
                     var selectedTabId = this.$el.find('form#'+tabName).closest(".tab-pane").attr("id"),
                         selectedTab = this.$el.find("ul.nav-tabs a[href='#"+selectedTabId+"']");
 

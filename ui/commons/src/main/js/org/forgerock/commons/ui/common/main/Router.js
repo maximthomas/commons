@@ -188,9 +188,9 @@ define([
     obj.init = function() {
         var Router = Backbone.Router.extend({
             initialize: function(routes) {
-                _.each(routes, function(route, key) {
+                _.each(routes, _.bind(function(route, key) {
                     this.route(route.url, key, _.partial(this.routeCallback, route));
-                }, this);
+                }, this));
             },
             routeCallback : function(route) {
                 if (!obj.checkRole(route)) {

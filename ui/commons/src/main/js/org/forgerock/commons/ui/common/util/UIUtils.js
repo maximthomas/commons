@@ -380,7 +380,7 @@ define([
     Handlebars.registerHelper('checkbox', function(map, name) {
         var ret = "<div class='checkboxList' id='"+name+"'><ol>", idx,
             sortedMap = _.chain(map)
-                            .pairs()
+                            .map(function (value, key) { return [key, value]; })
                             .sortBy(function (arr) { return arr[1]; })
                             .value();
 
