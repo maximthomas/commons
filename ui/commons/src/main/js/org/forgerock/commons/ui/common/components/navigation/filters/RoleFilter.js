@@ -34,7 +34,7 @@ define([
 
                 linkHasNoRole = !link.role;
                 userHasNecessaryRole = link.role && Configuration.loggedUser
-                    && _.contains(Configuration.loggedUser.uiroles, link.role);
+                    && _.includes(Configuration.loggedUser.uiroles, link.role);
 
                 if (linkHasNoRole || userHasNecessaryRole) {
                     return links[linkName];

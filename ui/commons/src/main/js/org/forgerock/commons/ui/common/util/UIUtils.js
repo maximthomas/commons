@@ -608,7 +608,7 @@ define([
          */
         "findByValues": function(collection, property, values) {
             return _.filter(collection, function(item) {
-                return _.contains(values, item[property]);
+                return _.includes(values, item[property]);
             });
         },
 
@@ -628,7 +628,7 @@ define([
          */
         "removeByValues": function(collection, property, values) {
             return _.reject(collection, function(item) {
-                return _.contains(values, item[property]);
+                return _.includes(values, item[property]);
             });
         },
 
