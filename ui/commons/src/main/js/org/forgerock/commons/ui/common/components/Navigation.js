@@ -201,9 +201,9 @@ define([
 
                         this.data.user = {
                             username: getUserName(),
-                            label: _.get(obj.configuration, "username.label"),
-                            secondaryLabel: _.get(obj.configuration, "username.secondaryLabel"),
-                            href: _.get(obj.configuration, "username.href")
+                            label: _.get(obj.configuration, ["username", "label"]),
+                            secondaryLabel: _.get(obj.configuration, ["username", "secondaryLabel"]),
+                            href: _.get(obj.configuration, ["username", "href"])
                         };
 
                         if (obj.configuration.helpLinks) {

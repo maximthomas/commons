@@ -17,7 +17,7 @@
 
 define([
     "jquery",
-    "underscore",
+    "lodash",
     "require",
     "handlebars",
     "i18next",

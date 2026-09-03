@@ -144,7 +144,7 @@ define([
                     // in the case when the token presented on the URL results in an unsuccessful
                     // response, do not simply redirect to /continue; doing so would reset the process
                     // and hide the reason for the failure from the user.
-                    if (_.get(response, "status.success") === false) {
+                    if (_.get(response, ["status", "success"]) === false) {
                         this.renderProcessState(response);
                     } else {
                         EventManager.sendEvent(Constants.EVENT_CHANGE_VIEW, {

@@ -16,7 +16,7 @@
 
 define([
     "jquery",
-    "underscore",
+    "lodash",
     "form2js",
     "js2form",
     "org/forgerock/commons/ui/user/profile/AbstractUserProfileTab",
